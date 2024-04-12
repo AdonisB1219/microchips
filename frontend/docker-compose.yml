@@ -1,0 +1,91 @@
+version: '3'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: base_erp
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - red_base
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - red_base
+  backend:
+    container_name: backenderp
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    image: python:3.9
+    command: bash -c "cd /backend  && cd /backend/app && python manage.py makemigrations && python manage.py migrate && python manage.py createsuperuser --username=admin --email=admin@admin.com && python manage.py runserver 0.0.0.0:4000"
+    volumes:
+      - ./backend/app:/backend/app
+      - ./backend/sonar-project.properties:/backend/sonar-project.properties
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+    networks:
+      - red_base
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8090:80"
+    restart: always
+    networks:
+      - red_base
+  # frontend:
+  #   container_name: frontenderp
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   image: node:lts
+  #   command: bash -c "cd /app  && cd /app/frontend && npm install && npm run dev -- --host 0.0.0.0 --port 5000"
+  #   volumes:
+  #     - ./frontend/app:/app/frontend
+  #     - ./frontend/sonar-project.properties:/app/sonar-project.properties
+  #   depends_on:
+  #     - backend
+  #   restart: always
+  #   networks:
+  #     - red_base
+  proxy:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "4000:4000"
+    depends_on:
+      - backend
+      # - frontend
+    restart: always
+    networks:
+      - red_base
+networks:
+  red_base:
+    driver: bridge
+volumes:
+  postgres_data:  
+  redis_data:

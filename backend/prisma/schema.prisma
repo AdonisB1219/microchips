@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// mascota
+model Mascota {
+  id Int @id @default(autoincrement())
+
+  nombre_mascota     String
+  codigo_chip        String   @unique
+  lugar_implantacion String
+  fecha_implantacion DateTime
+  fecha_nacimiento   DateTime
+  especie            Especie
+  raza               String
+  sexo               Sexo
+  ubicacion          String
+  aga                String?
+  esterilizado       Esterilizado
+
+  Tutor         Tutor?       @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  tutorId       Int?
+  Responsable   Responsable? @relation(fields: [responsableId], references: [id], onDelete: Cascade)
+  responsableId Int?
+}
+
+enum Especie {
+  CANINO
+  FELINO
+}
+
+enum Esterilizado {
+  SI
+  NO
+}
+
+enum Sexo {
+  MACHO
+  HEMBRA
+}
+
+// enum Estado {
+//   ACTIVO
+//   SANO
+//   FALLECIDO
+// }
+
+// user model: admin/veterinario/tutor
+model User {
+  id Int @id @default(autoincrement())
+
+  // reusar el email de la tabla propietario
+  nombre         String
+  identificacion String
+  direccion      String
+  telefono       String
+  email          String
+  password       String
+
+  es_admin       Boolean @default(false)
+  es_veterinario Boolean @default(false)
+  es_tutor       Boolean @default(false)
+
+  Tutor       Tutor[]
+  Responsable Responsable[]
+}
+
+// propietario q reutiliza modelo user
+model Tutor {
+  id            Int     @id @default(autoincrement())
+  nombre_tutor  String
+  observaciones String?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mascotas Mascota[]
+  userId   Int
+}
+
+// responsable/veterinario q reutiliza modelo user
+model Responsable {
+  id           Int     @id @default(autoincrement())
+  no_registro  String
+  especialidad String?
+  aga          String?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mascotas Mascota[]
+  userId   Int
+}

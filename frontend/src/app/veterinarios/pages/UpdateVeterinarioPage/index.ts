@@ -1,0 +1,1 @@
+export { default as UpdateVeterinarioPage } from './UpdateVeterinarioPage';

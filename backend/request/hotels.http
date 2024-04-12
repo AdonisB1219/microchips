@@ -1,0 +1,19 @@
+### Get hotels
+GET http://localhost:3300/hotels
+
+
+### Create a hotel
+POST http://localhost:3300/hotels
+
+Content-Type: application/json
+
+{
+  "name": "Hotel John",
+  "type": "hotel",
+  "city": "Berlin",
+  "address": "Somewhere",
+  "distante": "500",
+  "title": "Best Hotel in the City",
+  "description": "Some description",
+  "cheapestPrice": 100
+}
