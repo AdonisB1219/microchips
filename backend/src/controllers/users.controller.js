@@ -4,7 +4,7 @@ import { prisma } from '../db/mysql/index.js';
 
 export const signUpVeterinarian = async (req, res, next) => {
   try {
-    const { email, password, direccion, telefono, nombre, identificacion } =
+    const { email, password, telefono, nombre, identificacion } =
       req.body;
 
     // validate emial
@@ -26,7 +26,6 @@ export const signUpVeterinarian = async (req, res, next) => {
       data: {
         email,
         password: hashedPassword,
-        direccion,
         telefono,
         nombre,
         identificacion,
@@ -108,7 +107,7 @@ export const signUpTutor = async (req, res, next) => {
 
 export const signUpAdmin = async (req, res, next) => {
   try {
-    const { email, password, direccion, telefono, nombre, identificacion } =
+    const { email, password, empresaId, telefono, nombre, identificacion } =
       req.body;
 
     // validate emial
@@ -124,13 +123,28 @@ export const signUpAdmin = async (req, res, next) => {
       });
     }
 
+    const empresa = await prisma.empresa.findUnique({
+      where: {
+        id: empresaId
+      }
+    });
+
+    if(!empresa){
+      return res.status(400).json({
+        ok: false,
+        message: 'La empresa no ha sido registrada',
+      });
+    }
+
     const hashedPassword = await bcryptjs.hash(password, 10);
 
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        direccion,
+        Empresa: {
+          connect: { id: 1 }
+        },
         telefono,
         nombre,
         identificacion,

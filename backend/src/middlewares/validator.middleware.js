@@ -23,7 +23,6 @@ export const signUpRules = () => [
 
   body('nombre', 'El nombre es obligatorio').notEmpty(),
   body('identificacion', 'La identificación es obligatoria').notEmpty(),
-  body('direccion', 'La dirección es obligatoria').notEmpty(),
   body('telefono', 'El teléfono es obligatorio').notEmpty(),
   validate,
 
@@ -37,7 +36,6 @@ export const createUserSimpleRules = () => [
 
   body('nombre', 'El nombre es obligatorio').notEmpty(),
   body('identificacion', 'La identificación es obligatoria').notEmpty(),
-  body('direccion', 'La dirección es obligatoria').notEmpty(),
   body('telefono', 'El teléfono es obligatorio').notEmpty(),
   validate,
 ];

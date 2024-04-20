@@ -6,16 +6,16 @@ import { createError } from '../utils/error.js';
 
 export const signUp = async (req, res, next) => {
   try {
-    const { email, password, direccion, telefono, nombre, identificacion } =
+    const { email, password, telefono, nombre, identificacion } =
       req.body;
 
     const hashedPassword = await bcryptjs.hash(password, 10);
 
+    
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        direccion,
         telefono,
         nombre,
         identificacion,
@@ -35,10 +35,11 @@ export const signUp = async (req, res, next) => {
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
 
+
   try {
     const user = await prisma.user.findFirst({
       where: {
-        email,
+        email: email
       },
     });
     if (!user)
@@ -60,22 +61,9 @@ export const login = async (req, res, next) => {
     delete user.password;
 
     // validate if is veterinarian, tutor or admin
-    const isVeterinarian = await prisma.responsable.findFirst({
-      where: {
-        userId: user.id,
-      },
-    });
-    const isTutor = await prisma.tutor.findFirst({
-      where: {
-        userId: user.id,
-      },
-    });
+
     const userBody = {
-      ...user,
-      es_veterinario: isVeterinarian ? true : false,
-      es_tutor: isTutor ? true : false,
-      ...(isVeterinarian && { responsable: isVeterinarian }),
-      ...(isTutor && { tutor: isTutor }),
+      ...user
     };
 
     // Gen JWT

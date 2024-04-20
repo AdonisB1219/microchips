@@ -1,6 +1,7 @@
 import bcryptjs from 'bcryptjs';
 
 import { prisma } from '../db/mysql/index.js';
+import { filter } from 'compression';
 
 export const getVeterinarians = async (req, res, next) => {
   try {
@@ -8,39 +9,44 @@ export const getVeterinarians = async (req, res, next) => {
     const limit = +req.query.page_size || 10;
     const search = req.query?.nombre;
     const skip = (page - 1) * limit;
+    console.log(req.authenticatedUser);
+
+    const empresaId = req.authenticatedUser.empresaId;
+    const userIsSuperAdmin = req.authenticatedUser.es_superadmin;
+
+    const filterOptions = {
+      user: {
+        nombre: {
+          contains: search,
+        },
+      },
+    };
+
+    if (!userIsSuperAdmin) {
+      filterOptions.user.empresaId = empresaId;
+    }
+
 
     const veterinarians = await prisma.responsable.findMany({
       skip: skip,
       take: limit,
-      where: {
-        user: {
-          nombre: {
-            contains: search,
-          },
-        },
-      },
+      where: filterOptions,
       include: {
         user: {
           select: {
             id: true,
             nombre: true,
             identificacion: true,
-            direccion: true,
             telefono: true,
             email: true,
+            Empresa: true
           },
         },
       },
     });
 
     const totalVeterinarians = await prisma.responsable.count({
-      where: {
-        user: {
-          nombre: {
-            contains: search,
-          },
-        },
-      },
+      where: filterOptions
     });
     const totalPages = Math.ceil(totalVeterinarians / limit);
 
@@ -61,12 +67,22 @@ export const getVeterinarians = async (req, res, next) => {
 };
 
 export const getVeterinarian = async (req, res, next) => {
+
+  const empresa = req.authenticatedUser.empresaId;
+    const userIsSuperAdmin = req.authenticatedUser.es_superadmin;
+
+    const filterOptions = {
+      id: parseInt(id),
+    }
+
+    if (!userIsSuperAdmin) {
+      filterOptions.user.empresaId = empresa;
+    }
+
   const { id } = req.params;
   try {
     const veterinarian = await prisma.responsable.findUnique({
-      where: {
-        id: parseInt(id),
-      },
+      where: filterOptions,
       include: {
         user: {
           select: {

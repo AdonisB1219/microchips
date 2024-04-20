@@ -67,22 +67,14 @@ export const buildPdfPetD = pet => {
     head: [
       [
         'Responsable',
-        'Identificación',
-        'No. Registro',
         'Dirección',
-        'Teléfono',
-        'Email',
         'Aga',
       ],
     ],
     body: [
       [
         pet?.Responsable?.user?.nombre,
-        pet?.Responsable?.user?.identificacion,
-        pet?.Responsable?.no_registro,
         pet?.Responsable?.user?.direccion,
-        pet?.Responsable?.user?.telefono,
-        pet?.Responsable?.user?.email,
         pet?.Mascota?.aga,
       ],
     ],
@@ -116,7 +108,7 @@ export const buildPdfPetD = pet => {
   doc.autoTable({
     head: [
       [
-        'Mascota',
+        'Animal de compañía',
         'Código de chip',
         'Lugar de implantación',
         'Fecha de implantación',

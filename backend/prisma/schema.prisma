@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -19,7 +19,7 @@ model Mascota {
   id Int @id @default(autoincrement())
 
   nombre_mascota     String
-  codigo_chip        String   @unique
+  codigo_chip        String       @unique
   lugar_implantacion String
   fecha_implantacion DateTime
   fecha_nacimiento   DateTime
@@ -32,8 +32,8 @@ model Mascota {
 
   Tutor         Tutor?       @relation(fields: [tutorId], references: [id], onDelete: Cascade)
   tutorId       Int?
-  Responsable   Responsable? @relation(fields: [responsableId], references: [id], onDelete: Cascade)
-  responsableId Int?
+  Veterinario   Veterinario? @relation(fields: [veterinarioId], references: [id], onDelete: Cascade)
+  veterinarioId Int?
 }
 
 enum Especie {
@@ -64,17 +64,15 @@ model User {
   // reusar el email de la tabla propietario
   nombre         String
   identificacion String
-  direccion      String
   telefono       String
   email          String
   password       String
-
-  es_admin       Boolean @default(false)
-  es_veterinario Boolean @default(false)
-  es_tutor       Boolean @default(false)
-
-  Tutor       Tutor[]
-  Responsable Responsable[]
+  Rol        Roles      @relation(fields: [rolId], references: [id])
+  rolId            Int
+  Tutor          Tutor[]
+  Responsable    Veterinario[]
+  Administrador   Administradores[]
+  SuperAdministrador  SuperAdministrador[]
 }
 
 // propietario q reutiliza modelo user
@@ -82,20 +80,51 @@ model Tutor {
   id            Int     @id @default(autoincrement())
   nombre_tutor  String
   observaciones String?
-
+  direccion     String
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   mascotas Mascota[]
   userId   Int
 }
 
 // responsable/veterinario q reutiliza modelo user
-model Responsable {
+model Veterinario {
   id           Int     @id @default(autoincrement())
   no_registro  String
   especialidad String?
-  aga          String?
+  Empresa        Empresa?      @relation(fields: [empresaId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mascotas  Mascota[]
+  userId    Int
+  empresaId     Int
+}
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mascotas Mascota[]
-  userId   Int
+model Administradores {
+  id           Int     @id @default(autoincrement())
+  Observaciones String?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  Empresa        Empresa?      @relation(fields: [empresaId], references: [id])
+  empresaId    Int
+}
+
+model SuperAdministrador {
+  id           Int     @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+}
+
+model Empresa {
+  id             Int           @id @default(autoincrement())
+  nombre_empresa String
+  Veterinarios    Veterinario[]
+  Administradores    Administradores[]
+  direccion      String
+  telefono       String
+  email          String
+}
+
+model Roles {
+  id    Int    @id @default(autoincrement())
+  rol   String
+  user  User[]
 }

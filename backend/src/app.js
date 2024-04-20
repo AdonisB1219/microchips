@@ -1,4 +1,5 @@
 import express from 'express';
+import expressListEndpoints from 'express-list-endpoints';
 
 import {
   errorHandler,
@@ -13,15 +14,18 @@ import {
   tutorsRouter,
   usersRouter,
   veterinariansRouter,
+  empresasRouter
 } from './routes/index.js';
-import { createAdminUser } from './utils/create-admin.js';
+import { createSuperAdminUser } from './utils/create-admin.js';
+import { createRoles } from './utils/create-roles.js';
 
 // Initializations
 const app = express();
 
 // Create admin user if it doesn't exist
 (async () => {
-  await createAdminUser();
+  await createSuperAdminUser();
+  createRoles();
 })();
 
 // Middlewares
@@ -35,8 +39,12 @@ app.use('/free', freeRouter);
 app.use('/pdfs', pdfsRouter);
 app.use('/veterinarians', veterinariansRouter);
 app.use('/tutors', tutorsRouter);
+app.use('/empresas', empresasRouter);
 
 app.use(notFound);
 app.use(errorHandler);
+
+const endpoints = expressListEndpoints(app);
+console.log(endpoints);
 
 export default app;

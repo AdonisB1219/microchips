@@ -2,10 +2,11 @@ import bcryptjs from 'bcryptjs';
 
 import { prisma } from '../db/mysql/index.js';
 
-export const createAdminUser = async () => {
+
+export const createSuperAdminUser = async () => {
   const existingAdmin = await prisma.user.findFirst({
     where: {
-      email: 'admin@admin.com',
+      email: 'superadmin@admin.com',
     },
   });
 
@@ -15,23 +16,18 @@ export const createAdminUser = async () => {
 
       const user = await prisma.user.create({
         data: {
-          email: 'admin@admin.com',
+          email: 'superadmin@admin.com',
           password: hashedPassword,
-          nombre: 'ADMIN',
+          nombre: 'SUPER-ADMIN',
           identificacion: '1717172732',
           telefono: '0999999999',
-          direccion: 'SOME ADRESS',
-          es_admin: true,
-          es_veterinario: true,
+          rolId: 4
         },
       });
 
-      await prisma.responsable.create({
+      await prisma.superAdministrador.create({
         data: {
           userId: user?.id,
-          especialidad: 'ADMIN',
-          aga: 'AGA',
-          no_registro: `ADMIN-${user.id}`,
         },
       });
     } catch (error) {
@@ -39,4 +35,4 @@ export const createAdminUser = async () => {
       process.exit(1);
     }
   }
-};
+}; 

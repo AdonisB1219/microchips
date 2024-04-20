@@ -5,6 +5,8 @@ import petsRouter from './pets.routes.js';
 import tutorsRouter from './tutores.routes.js';
 import usersRouter from './users.routes.js';
 import veterinariansRouter from './veterinarios.routes.js';
+import empresasRouter from './empresas.routes.js';
+
 
 export {
   authRouter,
@@ -14,4 +16,5 @@ export {
   tutorsRouter,
   usersRouter,
   veterinariansRouter,
+  empresasRouter
 };
