@@ -4,6 +4,24 @@ import { prisma } from '../db/mysql/index.js';
 
 
 export const createSuperAdminUser = async () => {
+
+  let mauliscorp = await prisma.empresa.findFirst({
+    where: {
+      nombre_empresa: "MAULISCORP"
+    }
+  })
+
+  if(!mauliscorp){
+    mauliscorp = await prisma.empresa.create({
+      data: {
+        nombre_empresa: "MAULISCORP",
+        direccion: "direccion",
+        email: "mauliscorp@mauliscorp.com",
+        telefono: "5510"
+      }
+    })
+  }
+
   const existingAdmin = await prisma.user.findFirst({
     where: {
       email: 'superadmin@admin.com',
@@ -21,15 +39,11 @@ export const createSuperAdminUser = async () => {
           nombre: 'SUPER-ADMIN',
           identificacion: '1717172732',
           telefono: '0999999999',
-          rolId: 4
+          rolId: 4,
+          empresaId: mauliscorp.id
         },
       });
 
-      await prisma.superAdministrador.create({
-        data: {
-          userId: user?.id,
-        },
-      });
     } catch (error) {
       console.log('Error creating admin user:', error);
       process.exit(1);

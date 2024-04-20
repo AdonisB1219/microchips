@@ -4,7 +4,7 @@ import { prisma } from '../db/mysql/index.js';
 
 export const signUpVeterinarian = async (req, res, next) => {
   try {
-    const { email, password, telefono, nombre, identificacion } =
+    const { email, password, telefono, nombre, identificacion, no_registro, especialidad } =
       req.body;
 
     // validate emial
@@ -29,22 +29,23 @@ export const signUpVeterinarian = async (req, res, next) => {
         telefono,
         nombre,
         identificacion,
-        es_veterinario: true,
+        rolId: 2,
+        empresaId: req.authenticatedUser.empresaId
       },
     });
 
-    const veterinarian = await prisma.responsable.create({
+    const veterinarian = await prisma.veterinario.create({
       data: {
         userId: user.id,
-        especialidad: req.body.especialidad,
-        aga: req.body.aga,
-        no_registro: req.body.no_registro,
+        especialidad: especialidad,
+        no_registro: no_registro,
       },
       include: {
         user: true,
       },
     });
     delete veterinarian.user.password;
+    delete user.password;
     res
       .status(201)
       .json({ ok: true, message: 'Usuario creado con éxito!', veterinarian });
@@ -107,7 +108,7 @@ export const signUpTutor = async (req, res, next) => {
 
 export const signUpAdmin = async (req, res, next) => {
   try {
-    const { email, password, empresaId, telefono, nombre, identificacion } =
+    const { email, password, telefono, nombre, identificacion } =
       req.body;
 
     // validate emial
@@ -122,19 +123,10 @@ export const signUpAdmin = async (req, res, next) => {
         message: 'El correo ya ha sido registrado',
       });
     }
+    console.log("authuser -> ", req.authenticatedUser);
 
-    const empresa = await prisma.empresa.findUnique({
-      where: {
-        id: empresaId
-      }
-    });
 
-    if(!empresa){
-      return res.status(400).json({
-        ok: false,
-        message: 'La empresa no ha sido registrada',
-      });
-    }
+    const empresaId = (req.authenticatedUser.rolId === 4)? req.body.empresaId : req.authenticatedUser.empresaId;
 
     const hashedPassword = await bcryptjs.hash(password, 10);
 
@@ -142,27 +134,16 @@ export const signUpAdmin = async (req, res, next) => {
       data: {
         email,
         password: hashedPassword,
-        Empresa: {
-          connect: { id: 1 }
-        },
         telefono,
         nombre,
         identificacion,
-        es_admin: true,
-        es_veterinario: true,
+        rolId: 3,
+        empresaId
       },
     });
     delete user.password;
 
-    // create veterinarian/responsable
-    await prisma.responsable.create({
-      data: {
-        userId: user.id,
-        no_registro: `ADMIN-${user.id}`,
-        especialidad: 'ADMIN',
-        aga: 'AGA',
-      },
-    });
+
 
     res
       .status(201)

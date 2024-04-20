@@ -13,6 +13,7 @@ export const protectWithJwt = async (req, res, next) => {
 
   try {
     const { id } = jwt.verify(tokenJwt, SECRETORPRIVATEKEY_JWT);
+    console.log("verify token", id);
     const user = await prisma.user.findUnique({
       where: {
         id,
@@ -23,6 +24,7 @@ export const protectWithJwt = async (req, res, next) => {
       return res.status(401).json({ ok: false, msg: 'Invalid token!' });
 
     req.authenticatedUser = user;
+
 
     return next();
   } catch (error) {
@@ -36,9 +38,9 @@ export const verifyAdmin = (req, _res, next) => {
       createError(403, 'No tienes permisos para realizar esta acción')
     );
 
-  const { es_admin } = req.authenticatedUser;
+  const { rolId } = req.authenticatedUser;
 
-  if (es_admin) return next();
+  if (rolId > 2) return next();
 
   return next(createError(403, 'No tienes permisos para realizar esta acción'));
 };
@@ -49,9 +51,9 @@ export const isAdminOrVeterinarian = (req, _res, next) => {
       createError(403, 'No tienes permisos para realizar esta acción')
     );
 
-  const { es_admin, es_veterinario } = req.authenticatedUser;
+  const { rolId } = req.authenticatedUser;
 
-  if (es_admin || es_veterinario) return next();
+  if (rolId > 1) return next();
 
   return next(createError(403, 'No tienes permisos para realizar esta acción'));
 };
@@ -62,9 +64,9 @@ export const verifySuperAdmin = (req, _res, next) => {
       createError(403, 'No tienes permisos para realizar esta acción')
     );
 
-  const { es_superadmin } = req.authenticatedUser;
+  const { rolId } = req.authenticatedUser;
 
-  if (es_superadmin) return next();
+  if (rolId > 3) return next();
 
   return next(createError(403, 'No tienes permisos para realizar esta acción'));
 };

@@ -15,22 +15,31 @@ export const getPets = async (req, res, next) => {
       skip: skip,
       take: limit,
       where: {
-        OR: [
+        AND: [
           {
-            nombre_mascota: {
-              contains: nombre_mascota,
-            },
+            empresaId: req.authenticatedUser.empresaId
           },
           {
-            Tutor: {
-              user: {
-                nombre: {
-                  contains: nombre_tutor,
+            OR: [
+              {
+                nombre_mascota: {
+                  contains: nombre_mascota,
                 },
               },
-            },
-          },
-        ],
+              {
+                Tutor: {
+                  user: {
+                    nombre: {
+                      contains: nombre_tutor,
+                    },
+                  },
+                },
+              },
+            ],
+          }
+         
+        ]
+        
       },
 
       include: {
@@ -47,14 +56,13 @@ export const getPets = async (req, res, next) => {
             },
           },
         },
-        Responsable: {
+        Veterinario: {
           include: {
             user: {
               select: {
                 id: true,
                 nombre: true,
                 identificacion: true,
-                Empresa: true,
                 telefono: true,
                 email: true,
               },
@@ -256,7 +264,6 @@ export const createPet = async (req, res, next) => {
     especie,
     raza,
     sexo,
-    ubicacion,
     esterilizado,
     aga,
     tutorId,
@@ -301,11 +308,11 @@ export const createPet = async (req, res, next) => {
         data: {
           email: req.body.email,
           password: hashedPassword,
-          direccion: req.body.direccion,
           telefono: req.body.telefono,
           nombre: req.body.nombre,
           identificacion: req.body.identificacion,
-          es_tutor: true,
+          rolId: 1,
+          empresaId: req.authenticatedUser.empresaId
         },
       });
 
@@ -313,16 +320,22 @@ export const createPet = async (req, res, next) => {
         data: {
           userId: userTutor?.id,
           observaciones: observaciones || '',
-          nombre_tutor: req.body.nombre,
+          direccion: req.body.direccion
         },
       });
     }
 
-    const responsable = await prisma.responsable.findFirst({
+    const veterinario = await prisma.veterinario.findFirst({
       where: {
         userId: req.authenticatedUser.id,
       },
     });
+
+    if(!veterinario){
+      return res
+        .status(400)
+        .json({ ok: false, message: 'Debes estar logeado como veterinario para realizar este registro' });
+    }
 
     pet = await prisma.mascota.create({
       data: {
@@ -334,11 +347,11 @@ export const createPet = async (req, res, next) => {
         especie,
         raza,
         sexo,
-        ubicacion,
         esterilizado,
-        aga: aga || req.body?.aga,
-        tutorId: tutorId || tutor?.id,
-        responsableId: responsable?.id,
+        aga,
+        tutorId: tutorId || tutor.id,
+        veterinarioId: veterinario.id,
+        empresaId: req.authenticatedUser.empresaId
       },
     });
 

@@ -1,5 +1,4 @@
 import express from 'express';
-import expressListEndpoints from 'express-list-endpoints';
 
 import {
   errorHandler,
@@ -24,8 +23,8 @@ const app = express();
 
 // Create admin user if it doesn't exist
 (async () => {
+  await createRoles();
   await createSuperAdminUser();
-  createRoles();
 })();
 
 // Middlewares
@@ -44,7 +43,5 @@ app.use('/empresas', empresasRouter);
 app.use(notFound);
 app.use(errorHandler);
 
-const endpoints = expressListEndpoints(app);
-console.log(endpoints);
 
 export default app;

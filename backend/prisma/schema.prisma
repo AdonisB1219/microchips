@@ -26,14 +26,14 @@ model Mascota {
   especie            Especie
   raza               String
   sexo               Sexo
-  ubicacion          String
   aga                String?
   esterilizado       Esterilizado
-
-  Tutor         Tutor?       @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  tutorId       Int?
-  Veterinario   Veterinario? @relation(fields: [veterinarioId], references: [id], onDelete: Cascade)
-  veterinarioId Int?
+  empresaId          Int
+  Empresa         Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  Tutor         Tutor       @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  tutorId       Int
+  Veterinario   Veterinario @relation(fields: [veterinarioId], references: [id], onDelete: Cascade)
+  veterinarioId Int
 }
 
 enum Especie {
@@ -71,14 +71,13 @@ model User {
   rolId            Int
   Tutor          Tutor[]
   Responsable    Veterinario[]
-  Administrador   Administradores[]
-  SuperAdministrador  SuperAdministrador[]
+  Empresa        Empresa?      @relation(fields: [empresaId], references: [id])
+  empresaId    Int
 }
 
 // propietario q reutiliza modelo user
 model Tutor {
   id            Int     @id @default(autoincrement())
-  nombre_tutor  String
   observaciones String?
   direccion     String
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -91,33 +90,17 @@ model Veterinario {
   id           Int     @id @default(autoincrement())
   no_registro  String
   especialidad String?
-  Empresa        Empresa?      @relation(fields: [empresaId], references: [id])
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   mascotas  Mascota[]
   userId    Int
-  empresaId     Int
 }
 
-model Administradores {
-  id           Int     @id @default(autoincrement())
-  Observaciones String?
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  Empresa        Empresa?      @relation(fields: [empresaId], references: [id])
-  empresaId    Int
-}
-
-model SuperAdministrador {
-  id           Int     @id @default(autoincrement())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-}
 
 model Empresa {
   id             Int           @id @default(autoincrement())
   nombre_empresa String
-  Veterinarios    Veterinario[]
-  Administradores    Administradores[]
+  usuarios    User[]
+  Mascota         Mascota[]
   direccion      String
   telefono       String
   email          String

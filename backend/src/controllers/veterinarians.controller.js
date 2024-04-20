@@ -27,7 +27,7 @@ export const getVeterinarians = async (req, res, next) => {
     }
 
 
-    const veterinarians = await prisma.responsable.findMany({
+    const veterinarians = await prisma.veterinario.findMany({
       skip: skip,
       take: limit,
       where: filterOptions,
@@ -45,7 +45,7 @@ export const getVeterinarians = async (req, res, next) => {
       },
     });
 
-    const totalVeterinarians = await prisma.responsable.count({
+    const totalVeterinarians = await prisma.veterinario.count({
       where: filterOptions
     });
     const totalPages = Math.ceil(totalVeterinarians / limit);
@@ -81,7 +81,7 @@ export const getVeterinarian = async (req, res, next) => {
 
   const { id } = req.params;
   try {
-    const veterinarian = await prisma.responsable.findUnique({
+    const veterinarian = await prisma.veterinario.findUnique({
       where: filterOptions,
       include: {
         user: {
@@ -109,7 +109,7 @@ export const getVeterinarian = async (req, res, next) => {
 };
 
 export const createVeterinarian = async (req, res, next) => {
-  const { email, password, direccion, telefono, nombre, identificacion } =
+  const { email, password, telefono, nombre, identificacion, no_registro, especialidad } =
     req.body;
 
   try {
@@ -131,19 +131,23 @@ export const createVeterinarian = async (req, res, next) => {
       data: {
         email,
         password: hashedPassword,
-        direccion,
         telefono,
         nombre,
         identificacion,
-        es_veterinario: true,
+        rolId: 2,
       },
     });
     delete user.password;
 
+    console.log("auth user -> ", req.authenticatedUser)
+
     // create veterinarian/responsable
-    await prisma.responsable.create({
+    await prisma.veterinario.create({
       data: {
         userId: user?.id,
+        no_registro,
+        especialidad,
+        empresaId: req.authenticatedUser.empresaId
       },
     });
 
@@ -162,7 +166,7 @@ export const updateVeterinarian = async (req, res, next) => {
 
   try {
     // update user based on responsableId
-    const responsable = await prisma.responsable.findUnique({
+    const veterinarian = await prisma.veterinario.findUnique({
       where: {
         id: parseInt(id),
       },
@@ -175,7 +179,7 @@ export const updateVeterinarian = async (req, res, next) => {
 
     const user = await prisma.user.update({
       where: {
-        id: responsable.userId,
+        id: veterinarian.userId,
       },
       data: {
         email,
@@ -202,7 +206,7 @@ export const deleteVeterinarian = async (req, res, next) => {
   console.log(id);
 
   try {
-    const veterinarian = await prisma.responsable.findUnique({
+    const veterinarian = await prisma.veterinario.findUnique({
       where: {
         id: +id,
       },

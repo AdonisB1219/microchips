@@ -64,7 +64,6 @@ export const createPetRules = () => [
   body('especie', 'La especie es obligatoria').notEmpty(),
   body('raza', 'La raza es obligatoria').notEmpty(),
   body('sexo', 'El sexo es obligatorio').notEmpty(),
-  body('ubicacion', 'La ubicación es obligatoria').notEmpty(),
   body('esterilizado', 'El campo esterilizado es obligatorio').notEmpty(),
   // body('tutorId', 'El tutor es obligatorio').notEmpty(),
   validate,
