@@ -91,7 +91,8 @@ const AccountPopover = () => {
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         {MENU_OPTIONS.map(option => {
-          if (option?.admin && !user?.es_admin) return null;
+          if (option?.admin && (user?.id && user?.rolId < 3)) return null;
+          if (option?.superadmin && (user?.id && user?.rolId < 4)) return null;
 
           return (
             <Link

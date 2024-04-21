@@ -59,7 +59,7 @@ const PestPage: React.FC<PestPageProps> = () => {
     data: PestPagingRes,
     isLoading,
     isRefetching,
-  } = useFetchPets(!!user?.es_admin || !!user?.es_veterinario, {
+  } = useFetchPets(!!user?.rolId && user?.rolId > 1, {
     page: pageIndex + 1,
     page_size: pageSize,
     nombre_tutor: searchTerm,
@@ -70,7 +70,7 @@ const PestPage: React.FC<PestPageProps> = () => {
     data: myPets,
     isLoading: isLoadingMyPets,
     isRefetching: isRefetchingMyPets,
-  } = useFetchMyPets(!!user?.es_tutor, {
+  } = useFetchMyPets(!!user?.rolId && user?.rolId === 1, {
     page: pageIndex + 1,
     page_size: pageSize,
     nombre_mascota: searchTerm,
@@ -115,7 +115,7 @@ const PestPage: React.FC<PestPageProps> = () => {
 
   const handleExportData = () => {
     // data based on user role
-    const data = user?.es_tutor
+    const data = user?.rolId === 1
       ? myPets?.data || []
       : PestPagingRes?.data || [];
     if (!data.length) {
@@ -123,15 +123,15 @@ const PestPage: React.FC<PestPageProps> = () => {
     }
 
     const flattenedData = data.map(item => {
-      const { Tutor, Responsable, ...rest } = item;
+      const { Tutor, Veterinario, ...rest } = item;
 
       return {
         ...rest,
         // veterniario
-        nombre_veterinario: Responsable?.user?.nombre || 'N/A',
-        identificacion_veterinario: Responsable?.user?.identificacion || 'N/A',
-        telefono_veterinario: Responsable?.user?.telefono || 'N/A',
-        email_veterinario: Responsable?.user?.email || 'N/A',
+        nombre_veterinario: Veterinario?.user?.nombre || 'N/A',
+        identificacion_veterinario: Veterinario?.user?.identificacion || 'N/A',
+        telefono_veterinario: Veterinario?.user?.telefono || 'N/A',
+        email_veterinario: Veterinario?.user?.email || 'N/A',
         // tutor
         nombre_tutor: Tutor?.user?.nombre || 'N/A',
         identificacion_tutor: Tutor?.user?.identificacion || 'N/A',
@@ -231,10 +231,10 @@ const PestPage: React.FC<PestPageProps> = () => {
       },
 
       {
-        accessorKey: 'Responsable.user.nombre',
+        accessorKey: 'Veterinario.user.nombre',
         header: 'Responsable',
         size: 180,
-        Cell: ({ row }) => row.original?.Responsable?.user?.nombre || 'N/A',
+        Cell: ({ row }) => row.original?.Veterinario?.user?.nombre || 'N/A',
       },
     ],
     []
@@ -243,34 +243,34 @@ const PestPage: React.FC<PestPageProps> = () => {
   return (
     <SingleTableBoxScene
       title="Animal de compañía"
-      showCreateBtn={!!user?.es_admin || !!user?.es_veterinario}
+      showCreateBtn={ !!user?.rolId && user?.rolId > 1 && user?.rolId != 4}
       onClickCreateBtn={handleCLickCreatePet}
     >
       <CustomSearch
         onChange={onChangeFilter}
         value={globalFilter}
-        text={`por nombre ${user?.es_tutor ? 'de la animal de compañía' : 'del tutor'}`}
+        text={`por nombre ${user?.rolId === 1 ? 'del animal de compañía' : 'del tutor'}`}
       />
 
       <CustomTable<PetPopulated>
         columns={columns}
-        data={user?.es_tutor ? myPets?.data || [] : PestPagingRes?.data || []}
-        isLoading={user?.es_tutor ? isLoadingMyPets : isLoading}
-        isRefetching={user?.es_tutor ? isRefetchingMyPets : isRefetching}
+        data={user?.rolId === 1 ? myPets?.data || [] : PestPagingRes?.data || []}
+        isLoading={user?.rolId === 1 ? isLoadingMyPets : isLoading}
+        isRefetching={user?.rolId === 1 ? isRefetchingMyPets : isRefetching}
         // // search
         enableGlobalFilter={false}
         // // pagination
         pagination={pagination}
         onPaging={setPagination}
         rowCount={
-          user?.es_tutor ? myPets?.count || 0 : PestPagingRes?.count || 0
+          user?.rolId === 1 ? myPets?.count || 0 : PestPagingRes?.count || 0
         }
         // // actions
         actionsColumnSize={180}
         showOneCustomButton
         oneCustomButton={pet => (
           <>
-            {user?.es_admin || user?.es_veterinario ? (
+            {(user?.rolId && user?.rolId > 1) ? (
               <>
                 <Tooltip title="Editar">
                   <IconButton
@@ -319,7 +319,7 @@ const PestPage: React.FC<PestPageProps> = () => {
               </Box>
             </>
 
-            {user?.es_admin ? (
+            {user?.rolId && user?.rolId > 3 ? (
               <>
                 <Tooltip title="Eliminar">
                   <IconButton

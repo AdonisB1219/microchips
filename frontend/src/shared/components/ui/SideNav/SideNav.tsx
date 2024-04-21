@@ -60,7 +60,10 @@ export default function SideNav({ openNav, onCloseNav }: NavProps) {
   const renderMenu = (
     <Stack component="nav" spacing={0.5} sx={{ px: 2 }}>
       {navConfig.map(item => {
-        if (item?.admin && !user?.es_admin) {
+        if (item?.admin && (user?.rolId && user?.rolId <3)) {
+          return null;
+        }
+        if (item?.superadmin && (user?.rolId && user?.rolId <4)) {
           return null;
         }
 

@@ -67,7 +67,7 @@ export interface PetPopulated {
   tutorId: number;
   responsableId: number;
   Tutor: Tutor;
-  Responsable: Veterinario;
+  Veterinario: Veterinario;
 }
 
 export interface Tutor {

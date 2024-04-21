@@ -12,7 +12,6 @@ export interface User {
   direccion: string;
   telefono: string;
   email: string;
-  es_admin: boolean;
-  es_veterinario: boolean;
-  es_tutor: boolean;
+  rolId: number;
+
 }

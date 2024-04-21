@@ -37,7 +37,7 @@ export const getPets = async (req, res, next) => {
       ]
     }
 
-    if (req.authenticatedUser.rol === 4) {
+    if (req.authenticatedUser.rolId === 4) {
       filterOptions = {
         OR: [
           {
@@ -94,24 +94,7 @@ export const getPets = async (req, res, next) => {
     });
 
     const totalPets = await prisma.mascota.count({
-      where: {
-        OR: [
-          {
-            nombre_mascota: {
-              contains: nombre_mascota,
-            },
-          },
-          {
-            Tutor: {
-              user: {
-                nombre: {
-                  contains: nombre_tutor,
-                },
-              },
-            },
-          },
-        ],
-      },
+      where: filterOptions
     });
     const totalPages = Math.ceil(totalPets / limit);
 

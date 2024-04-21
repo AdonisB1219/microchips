@@ -1,13 +1,14 @@
 import { ReactElement } from 'react';
 import { FaHome, FaUserAlt } from 'react-icons/fa';
 import { FaUserDoctor } from 'react-icons/fa6';
-import { MdAdminPanelSettings, MdOutlinePets } from 'react-icons/md';
+import { MdAdminPanelSettings, MdOutlinePets, MdOutlineWork } from 'react-icons/md';
 
 interface NavItem {
   title: string;
   path: string;
   icon: ReactElement;
   admin?: boolean;
+  superadmin?: boolean;
 }
 
 export const navConfig: NavItem[] = [
@@ -41,5 +42,12 @@ export const navConfig: NavItem[] = [
     path: '/dashboard/administradores',
     icon: <MdAdminPanelSettings />,
     admin: true,
+  },
+
+  {
+    title: 'Empresas',
+    path: '/dashboard/empresas',
+    icon: <MdOutlineWork />,
+    superadmin: true,
   },
 ];
