@@ -78,11 +78,11 @@ export const signUpTutor = async (req, res, next) => {
       data: {
         email,
         password: hashedPassword,
-        direccion,
         telefono,
         nombre,
         identificacion,
-        es_tutor: true,
+        rolId: 1,
+        empresaId: req.authenticatedUser.empresaId
       },
     });
 
@@ -90,7 +90,7 @@ export const signUpTutor = async (req, res, next) => {
       data: {
         userId: user.id,
         observaciones: req.body.observaciones || '',
-        nombre_tutor: req.body.nombre,
+        direccion: direccion,
       },
       include: {
         user: true,
@@ -160,27 +160,25 @@ export const getAdmins = async (req, res, next) => {
     const skip = (page - 1) * limit;
     const adminName = req.query.nombre || '';
 
-    const admins = await prisma.user.findMany({
-      where: {
-        nombre: {
-          contains: adminName,
-        },
-        es_admin: true,
-        // email: {
-        //   not: 'admin@admin.com',
-        // },
+    let filterOptions = {
+      nombre: {
+        contains: adminName,
       },
+      rolId: 3,
+    };
+
+    if (req.authenticatedUser.rolId != 4 ){
+      filterOptions.empresaId = req.authenticatedUser.empresaId
+    }
+    
+    const admins = await prisma.user.findMany({
+      where: filterOptions,
       skip: skip,
       take: limit,
     });
 
     const total = await prisma.user.count({
-      where: {
-        nombre: {
-          contains: adminName,
-        },
-        es_admin: true,
-      },
+      where: filterOptions
     });
     const totalPages = Math.ceil(total / limit);
 
@@ -205,13 +203,19 @@ export const getAdmin = async (req, res, next) => {
     const admin = await prisma.user.findFirst({
       where: {
         id: +req.params.id,
-        es_admin: true,
+        rolId: 3,
       },
     });
+
+
     if (!admin) {
       return res
         .status(404)
         .json({ ok: false, message: 'Admin no encontrado' });
+    }
+
+    if(req.authenticatedUser.empresaId != admin.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
     }
 
     delete admin.password;
@@ -223,8 +227,26 @@ export const getAdmin = async (req, res, next) => {
 
 export const updateAdmin = async (req, res, next) => {
   try {
-    const { email, direccion, telefono, nombre, identificacion, password } =
+    const { email, telefono, nombre, identificacion, password } =
       req.body;
+
+      const existingAdmin = await prisma.user.findFirst({
+        where: {
+          id: +req.params.id,
+          rolId: 3,
+        },
+      });
+  
+  
+      if (!existingAdmin) {
+        return res
+          .status(404)
+          .json({ ok: false, message: 'Admin no encontrado' });
+      }
+  
+      if(req.authenticatedUser.empresaId != existingAdmin.empresaId && req.authenticatedUser.rolId != 4){
+        res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
+      }
 
     const updatedPassword = await bcryptjs.hash(password || '', 10);
 
@@ -234,7 +256,6 @@ export const updateAdmin = async (req, res, next) => {
       },
       data: {
         email,
-        direccion,
         telefono,
         nombre,
         identificacion,
@@ -249,6 +270,24 @@ export const updateAdmin = async (req, res, next) => {
 
 export const deleteAdmin = async (req, res, next) => {
   try {
+    const existingAdmin = await prisma.user.findFirst({
+      where: {
+        id: +req.params.id,
+        rolId: 3,
+      },
+    });
+
+
+    if (!existingAdmin) {
+      return res
+        .status(404)
+        .json({ ok: false, message: 'Admin no encontrado' });
+    }
+
+    if(req.authenticatedUser.empresaId != existingAdmin.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
+    }
+    
     const admin = await prisma.user.delete({
       where: {
         id: +req.params.id,

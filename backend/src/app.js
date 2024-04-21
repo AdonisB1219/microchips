@@ -7,7 +7,6 @@ import {
 } from './middlewares/index.js';
 import {
   authRouter,
-  freeRouter,
   pdfsRouter,
   petsRouter,
   tutorsRouter,
@@ -34,7 +33,6 @@ setupMiddlewares(app);
 app.use('/auth', authRouter);
 app.use('/pets', petsRouter);
 app.use('/users', usersRouter);
-app.use('/free', freeRouter);
 app.use('/pdfs', pdfsRouter);
 app.use('/veterinarians', veterinariansRouter);
 app.use('/tutors', tutorsRouter);

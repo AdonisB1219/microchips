@@ -19,21 +19,19 @@ export const pdfPet = async (req, res, next) => {
                 id: true,
                 nombre: true,
                 identificacion: true,
-                direccion: true,
                 telefono: true,
                 email: true,
               },
             },
           },
         },
-        Responsable: {
+        Veterinario: {
           include: {
             user: {
               select: {
                 id: true,
                 nombre: true,
                 identificacion: true,
-                direccion: true,
                 telefono: true,
                 email: true,
               },
@@ -42,6 +40,15 @@ export const pdfPet = async (req, res, next) => {
         },
       },
     });
+
+    if(req.authenticatedUser.empresaId != pet.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para ver este pdf' });
+    }
+
+    if(req.authenticatedUser.rolId === 1 && pet.Tutor.user.id != req.authenticatedUser.id) {
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para ver este pdf' });
+    }
+
 
     const pdf = buildPdfPetD(pet);
 

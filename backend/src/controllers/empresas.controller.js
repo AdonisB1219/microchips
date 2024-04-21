@@ -82,11 +82,11 @@ export const createEmpresa = async (req, res, next) => {
 };
 
 export const deleteEmpresa = async (req, res, next) => {
-    const { nombre_empresa } = req.params;
+    const { id } = req.params;
     try {
         const empresa = await prisma.empresa.findUnique({
             where: {
-                nombre_empresa: nombre_empresa
+                id: parseInt(id),
             },
         });
 
@@ -99,7 +99,7 @@ export const deleteEmpresa = async (req, res, next) => {
 
         await prisma.empresa.delete({
             where: {
-                nombre_empresa: nombre_empresa
+                id
             },
         });
 
@@ -111,3 +111,68 @@ export const deleteEmpresa = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getEmpresa = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+
+        const empresa = await prisma.empresa.findUnique({
+            where: {
+                id: parseInt(id),
+            },
+        });
+
+        if (!empresa) {
+            return res.status(404).json({
+              ok: false,
+              message: 'Empresa no encontrado',
+            });
+          }
+      
+          res.status(200).json(empresa);
+
+    } catch (error) {
+        next(error);
+    }
+
+}
+
+export const updateEmpresa = async (req, res, next) => {
+    const { id } = req.params;
+    const { direccion, telefono, email} =
+      req.body;
+  
+    try {
+      const empresa = await prisma.empresa.findUnique({
+        where: {
+          id: parseInt(id),
+        },
+      });
+  
+      if (!empresa) {
+        return res.status(404).json({
+          ok: false,
+          message: 'Empresa no encontrado',
+        });
+      }
+  
+      const user = await prisma.empresa.update({
+        where: {
+          id: empresa.id
+        },
+        data: {
+          email,
+          direccion,
+          telefono
+        },
+      });
+  
+      res.status(200).json({
+        ok: true,
+        message: 'Empresa actualizado con éxito!',
+        data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };

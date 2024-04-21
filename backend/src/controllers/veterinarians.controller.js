@@ -1,7 +1,6 @@
 import bcryptjs from 'bcryptjs';
 
 import { prisma } from '../db/mysql/index.js';
-import { filter } from 'compression';
 
 export const getVeterinarians = async (req, res, next) => {
   try {
@@ -12,7 +11,7 @@ export const getVeterinarians = async (req, res, next) => {
     console.log(req.authenticatedUser);
 
     const empresaId = req.authenticatedUser.empresaId;
-    const userIsSuperAdmin = req.authenticatedUser.es_superadmin;
+    const userRole = req.authenticatedUser.rolId;
 
     const filterOptions = {
       user: {
@@ -22,7 +21,7 @@ export const getVeterinarians = async (req, res, next) => {
       },
     };
 
-    if (!userIsSuperAdmin) {
+    if (userRole != 4) {
       filterOptions.user.empresaId = empresaId;
     }
 
@@ -68,28 +67,19 @@ export const getVeterinarians = async (req, res, next) => {
 
 export const getVeterinarian = async (req, res, next) => {
 
-  const empresa = req.authenticatedUser.empresaId;
-    const userIsSuperAdmin = req.authenticatedUser.es_superadmin;
-
-    const filterOptions = {
-      id: parseInt(id),
-    }
-
-    if (!userIsSuperAdmin) {
-      filterOptions.user.empresaId = empresa;
-    }
-
   const { id } = req.params;
   try {
     const veterinarian = await prisma.veterinario.findUnique({
-      where: filterOptions,
+      where: {
+        id: parseInt(id),
+      },
       include: {
         user: {
           select: {
             id: true,
             nombre: true,
             identificacion: true,
-            direccion: true,
+            empresaId: true,
             telefono: true,
             email: true,
           },
@@ -97,10 +87,16 @@ export const getVeterinarian = async (req, res, next) => {
       },
     });
 
-    if (!veterinarian)
+    if (!veterinarian) {
       return res
         .status(404)
         .json({ ok: false, msg: 'Veterinario no encontrado' });
+    }
+
+    if (req.authenticatedUser.empresaId != veterinarian.user.empresaId && req.authenticatedUser.rolId != 4) {
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
+    }
+
 
     res.status(200).json(veterinarian);
   } catch (error) {
@@ -111,6 +107,11 @@ export const getVeterinarian = async (req, res, next) => {
 export const createVeterinarian = async (req, res, next) => {
   const { email, password, telefono, nombre, identificacion, no_registro, especialidad } =
     req.body;
+
+  if (req.authenticatedUser.rolId !== 3)
+    return res
+      .status(400)
+      .json({ ok: false, message: 'Debes tener permisos de administrador para realizar esta accion' });
 
   try {
     const hashedPassword = await bcryptjs.hash(password, 10);
@@ -135,19 +136,16 @@ export const createVeterinarian = async (req, res, next) => {
         nombre,
         identificacion,
         rolId: 2,
+        empresaId: req.authenticatedUser.empresaId
       },
     });
     delete user.password;
 
-    console.log("auth user -> ", req.authenticatedUser)
-
-    // create veterinarian/responsable
     await prisma.veterinario.create({
       data: {
         userId: user?.id,
         no_registro,
         especialidad,
-        empresaId: req.authenticatedUser.empresaId
       },
     });
 
@@ -161,7 +159,7 @@ export const createVeterinarian = async (req, res, next) => {
 
 export const updateVeterinarian = async (req, res, next) => {
   const { id } = req.params;
-  const { email, direccion, telefono, nombre, identificacion, password } =
+  const { email, telefono, nombre, identificacion, password } =
     req.body;
 
   try {
@@ -170,10 +168,19 @@ export const updateVeterinarian = async (req, res, next) => {
       where: {
         id: parseInt(id),
       },
-      select: {
-        userId: true,
+      include: {
+        user: {
+          select: {
+            rolId: true,
+            empresaId: true
+          }
+        },
       },
     });
+
+    if (req.authenticatedUser.empresaId != veterinarian.user.empresaId && req.authenticatedUser.rolId != 4) {
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
+    }
 
     const updatedPassword = await bcryptjs.hash(password || '', 10);
 
@@ -183,7 +190,6 @@ export const updateVeterinarian = async (req, res, next) => {
       },
       data: {
         email,
-        direccion,
         telefono,
         nombre,
         identificacion,
@@ -210,12 +216,25 @@ export const deleteVeterinarian = async (req, res, next) => {
       where: {
         id: +id,
       },
+      include: {
+        user: {
+          select: {
+            rolId: true,
+            empresaId: true
+          }
+        },
+      },
     });
-    if (!veterinarian)
+    if (!veterinarian) {
       return res
         .status(404)
         .json({ ok: false, message: 'Veterinario no encontrado' });
+    }
 
+
+    if (req.authenticatedUser.empresaId != veterinarian.user.empresaId && req.authenticatedUser.rolId != 4) {
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
+    }
     await prisma.user.delete({
       where: {
         id: veterinarian.userId,

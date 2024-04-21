@@ -3,7 +3,9 @@ import { Router } from 'express';
 import {
     getEmpresas,
     createEmpresa,
-    deleteEmpresa
+    deleteEmpresa,
+    updateEmpresa,
+    getEmpresa
 } from '../controllers/empresas.controller.js';
 
 import {
@@ -16,8 +18,14 @@ const router = Router();
 router
     .route('/')
     .get([protectWithJwt, verifySuperAdmin], getEmpresas)
-    .post([protectWithJwt, verifySuperAdmin], createEmpresa)
-    .delete([protectWithJwt, verifySuperAdmin], deleteEmpresa);
+    .post([protectWithJwt, verifySuperAdmin], createEmpresa);
+
+router
+    .route('/:id')
+    .put([protectWithJwt, verifySuperAdmin], updateEmpresa)
+    .delete([protectWithJwt, verifySuperAdmin], deleteEmpresa)
+    .get([protectWithJwt, verifySuperAdmin], getEmpresa);
+
 
 
     export default router;

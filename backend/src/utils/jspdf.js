@@ -73,8 +73,8 @@ export const buildPdfPetD = pet => {
     ],
     body: [
       [
-        pet?.Responsable?.user?.nombre,
-        pet?.Responsable?.user?.direccion,
+        pet?.Veterinario?.user?.nombre,
+        pet?.Veterinario?.user?.direccion,
         pet?.Mascota?.aga,
       ],
     ],
@@ -96,7 +96,7 @@ export const buildPdfPetD = pet => {
       [
         pet?.Tutor?.user?.nombre,
         pet?.Tutor?.user?.identificacion,
-        pet?.Tutor?.user?.direccion,
+        pet?.Tutor?.direccion,
         pet?.Tutor?.user?.telefono,
         pet?.Tutor?.user?.email,
         pet?.Tutor?.observaciones,

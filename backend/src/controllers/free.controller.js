@@ -1,4 +1,4 @@
-import { prisma } from '../db/mysql/index.js';
+/* import { prisma } from '../db/mysql/index.js';
 
 export const getPetsFree = async (req, res, next) => {
   try {
@@ -225,3 +225,4 @@ export const searchPets = async (req, res, next) => {
     next(error);
   }
 };
+ */

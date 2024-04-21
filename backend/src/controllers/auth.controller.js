@@ -4,7 +4,7 @@ import { prisma } from '../db/mysql/index.js';
 import { genJWT } from '../helpers/index.js';
 import { createError } from '../utils/error.js';
 
-export const signUp = async (req, res, next) => {
+/* export const signUp = async (req, res, next) => {
   try {
     const { email, password, telefono, nombre, identificacion } =
       req.body;
@@ -30,7 +30,7 @@ export const signUp = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+}; */
 
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
@@ -95,7 +95,7 @@ export const renewJwt = async (req, res) => {
   });
 };
 
-export const validateEmail = async (req, res, next) => {
+/* export const validateEmail = async (req, res, next) => {
   const { email } = req.query;
 
   try {
@@ -115,4 +115,4 @@ export const validateEmail = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+}; */

@@ -5,12 +5,10 @@ import {
   getAdmin,
   getAdmins,
   signUpAdmin,
-  signUpVeterinarian,
   updateAdmin,
 } from '../controllers/index.js';
 import {
   createVeterinarianAdminRules,
-  createVeterinarianRules,
 } from '../middlewares/index.js';
 import {
   protectWithJwt,
@@ -19,12 +17,6 @@ import {
 
 const router = Router();
 
-router
-  .route('/register-responsable')
-  .post(
-    [protectWithJwt, verifyAdmin, createVeterinarianRules()],
-    signUpVeterinarian
-  );
 
 router
   .route('/administradores')

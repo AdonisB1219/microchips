@@ -11,36 +11,57 @@ export const getPets = async (req, res, next) => {
     const nombre_mascota = req.query?.nombre_mascota;
     const nombre_tutor = req.query?.nombre_tutor;
 
-    const pets = await prisma.mascota.findMany({
-      skip: skip,
-      take: limit,
-      where: {
-        AND: [
-          {
-            empresaId: req.authenticatedUser.empresaId
-          },
-          {
-            OR: [
-              {
-                nombre_mascota: {
-                  contains: nombre_mascota,
-                },
+    let filterOptions = {
+      AND: [
+        {
+          empresaId: req.authenticatedUser.empresaId
+        },
+        {
+          OR: [
+            {
+              nombre_mascota: {
+                contains: nombre_mascota,
               },
-              {
-                Tutor: {
-                  user: {
-                    nombre: {
-                      contains: nombre_tutor,
-                    },
+            },
+            {
+              Tutor: {
+                user: {
+                  nombre: {
+                    contains: nombre_tutor,
                   },
                 },
               },
-            ],
-          }
-         
-        ]
-        
-      },
+            },
+          ],
+        }
+      ]
+    }
+
+    if (req.authenticatedUser.rol === 4) {
+      filterOptions = {
+        OR: [
+          {
+            nombre_mascota: {
+              contains: nombre_mascota,
+            },
+          },
+          {
+            Tutor: {
+              user: {
+                nombre: {
+                  contains: nombre_tutor,
+                },
+              },
+            },
+          },
+        ],
+      }
+    }
+
+    const pets = await prisma.mascota.findMany({
+      skip: skip,
+      take: limit,
+      where: filterOptions,
 
       include: {
         Tutor: {
@@ -153,21 +174,19 @@ export const getMyPets = async (req, res, next) => {
                 id: true,
                 nombre: true,
                 identificacion: true,
-                direccion: true,
                 telefono: true,
                 email: true,
               },
             },
           },
         },
-        Responsable: {
+        Veterinario: {
           include: {
             user: {
               select: {
                 id: true,
                 nombre: true,
                 identificacion: true,
-                direccion: true,
                 telefono: true,
                 email: true,
               },
@@ -225,21 +244,19 @@ export const getPet = async (req, res, next) => {
                 id: true,
                 nombre: true,
                 identificacion: true,
-                direccion: true,
                 telefono: true,
                 email: true,
               },
             },
           },
         },
-        Responsable: {
+        Veterinario: {
           include: {
             user: {
               select: {
                 id: true,
                 nombre: true,
                 identificacion: true,
-                direccion: true,
                 telefono: true,
                 email: true,
               },
@@ -248,6 +265,10 @@ export const getPet = async (req, res, next) => {
         },
       },
     });
+
+    if(req.authenticatedUser.empresaId != pet.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para ver este registro' });
+    }
 
     res.status(200).json(pet);
   } catch (error) {
@@ -302,6 +323,18 @@ export const createPet = async (req, res, next) => {
           .json({ ok: false, message: 'Tutor ya registrado con ese email' });
       }
 
+      const veterinario = await prisma.veterinario.findFirst({
+        where: {
+          userId: req.authenticatedUser.id,
+        },
+      });
+  
+      if (!veterinario) {
+        return res
+          .status(400)
+          .json({ ok: false, message: 'Debes estar logeado como veterinario para realizar este registro' });
+      }
+
       const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 
       userTutor = await prisma.user.create({
@@ -325,17 +358,6 @@ export const createPet = async (req, res, next) => {
       });
     }
 
-    const veterinario = await prisma.veterinario.findFirst({
-      where: {
-        userId: req.authenticatedUser.id,
-      },
-    });
-
-    if(!veterinario){
-      return res
-        .status(400)
-        .json({ ok: false, message: 'Debes estar logeado como veterinario para realizar este registro' });
-    }
 
     pet = await prisma.mascota.create({
       data: {
@@ -381,9 +403,10 @@ export const updatePet = async (req, res, next) => {
     especie,
     raza,
     sexo,
-    ubicacion,
+    aga,
     esterilizado,
     tutorId,
+    veterinarioId
   } = req.body;
 
   try {
@@ -398,6 +421,8 @@ export const updatePet = async (req, res, next) => {
         .status(404)
         .json({ ok: false, message: 'Tutor no encontrado' });
     }
+
+
     const userTutor = await prisma.user.findUnique({
       where: {
         id: tutor.userId,
@@ -409,13 +434,16 @@ export const updatePet = async (req, res, next) => {
         .json({ ok: false, message: 'Usuario tutor no encontrado' });
     }
 
+    if(req.authenticatedUser.empresaId != userTutor.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
+    }
+
     const updateUser = prisma.user.update({
       where: {
         id: userTutor.id,
       },
       data: {
         email: req.body.email,
-        direccion: req.body.direccion,
         telefono: req.body.telefono,
         nombre: req.body.nombre,
         identificacion: req.body.identificacion,
@@ -427,6 +455,7 @@ export const updatePet = async (req, res, next) => {
         id: tutorId,
       },
       data: {
+        direccion: req.body.direccion,
         observaciones: req.body.observaciones || '',
       },
     });
@@ -444,8 +473,9 @@ export const updatePet = async (req, res, next) => {
         especie,
         raza,
         sexo,
-        ubicacion,
         esterilizado,
+        aga,
+        veterinarioId
       },
     });
 
@@ -476,6 +506,10 @@ export const deletePet = async (req, res, next) => {
       return res
         .status(404)
         .json({ ok: false, message: 'Mascota no encontrada' });
+    }
+
+    if(req.authenticatedUser.empresaId != pet.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
     }
 
     await prisma.mascota.delete({

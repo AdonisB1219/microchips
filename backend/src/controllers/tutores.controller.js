@@ -17,6 +17,7 @@ export const getTutores = async (req, res, next) => {
           nombre: {
             contains: search,
           },
+          empresaId: req.authenticatedUser.empresaId
         },
       },
       include: {
@@ -25,7 +26,6 @@ export const getTutores = async (req, res, next) => {
             id: true,
             nombre: true,
             identificacion: true,
-            direccion: true,
             telefono: true,
             email: true,
           },
@@ -73,7 +73,6 @@ export const getTutor = async (req, res, next) => {
             id: true,
             nombre: true,
             identificacion: true,
-            direccion: true,
             telefono: true,
             email: true,
           },
@@ -88,6 +87,10 @@ export const getTutor = async (req, res, next) => {
       });
     }
 
+    if(req.authenticatedUser.empresaId != tutor.user.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
+    }
+
     res.status(200).json(tutor);
   } catch (error) {
     next(error);
@@ -96,7 +99,7 @@ export const getTutor = async (req, res, next) => {
 
 export const updateTutor = async (req, res, next) => {
   const { id } = req.params;
-  const { email, direccion, telefono, nombre, identificacion, password } =
+  const { email, telefono, nombre, identificacion, password, direccion } =
     req.body;
 
   try {
@@ -104,6 +107,13 @@ export const updateTutor = async (req, res, next) => {
       where: {
         id: parseInt(id),
       },
+      include: {
+        user: {
+          select: {
+            empresaId: true
+          }
+        }
+      }
     });
 
     if (!tutor) {
@@ -113,6 +123,10 @@ export const updateTutor = async (req, res, next) => {
       });
     }
 
+    if(req.authenticatedUser.empresaId != tutor.user.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
+    }
+
     const updatedPassword = await bcryptjs.hash(password || '', 10);
     const user = await prisma.user.update({
       where: {
@@ -120,13 +134,21 @@ export const updateTutor = async (req, res, next) => {
       },
       data: {
         email,
-        direccion,
         telefono,
         nombre,
         identificacion,
         ...(password && { password: updatedPassword }),
       },
     });
+
+    await prisma.tutor.update({
+      where: {
+        id
+      },
+      data: {
+        direccion
+      }
+    })
 
     res.status(200).json({
       ok: true,
@@ -145,13 +167,25 @@ export const deleteTutor = async (req, res, next) => {
       where: {
         id: parseInt(id),
       },
+      include: {
+        user: {
+          select: {
+            empresaId: true
+          }
+        }
+      }
     });
+
 
     if (!tutor) {
       return res.status(404).json({
         ok: false,
         message: 'Tutor no encontrado',
       });
+    }
+
+    if(req.authenticatedUser.empresaId != tutor.user.empresaId && req.authenticatedUser.rolId != 4){
+      res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
     }
 
     await prisma.user.delete({
