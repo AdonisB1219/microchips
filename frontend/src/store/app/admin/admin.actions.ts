@@ -103,7 +103,6 @@ export const getAdmins = (params?: GetAdminsParams) => {
 };
 
 export const getAdmin = (id: number) => {
-  console.log('id', id);
   return get<Admin>(`/users/administradores/${id}`, true);
 };
 

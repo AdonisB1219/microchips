@@ -21,6 +21,7 @@ import { useAuthStore } from '@/store/auth';
 import { useUiConfirmModalStore } from '@/store/ui';
 import { toast } from 'react-toastify';
 import { CreatePetModal } from '../../shared/components/CreatePetModal';
+import { useIsAdminOrVeterinarian } from '@/shared/hooks';
 
 export const returnUrlPestPage = '/dashboard/mascotas';
 
@@ -30,6 +31,10 @@ export type PestPageProps = {};
 
 const PestPage: React.FC<PestPageProps> = () => {
   const navigate = useNavigate();
+  useIsAdminOrVeterinarian();
+  
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
 
   ///* local state
   const [isOpenModal, setIsOpenModal] = useState(false);
@@ -39,7 +44,6 @@ const PestPage: React.FC<PestPageProps> = () => {
   const setConfirmDialogIsOpen = useUiConfirmModalStore(
     s => s.setConfirmDialogIsOpen
   );
-  const user = useAuthStore(s => s.user);
 
   ///* mutations
   const deletePet = useDeletePet();
@@ -128,10 +132,10 @@ const PestPage: React.FC<PestPageProps> = () => {
       return {
         ...rest,
         // veterniario
-        nombre_veterinario: Veterinario?.user?.nombre || 'N/A',
-        identificacion_veterinario: Veterinario?.user?.identificacion || 'N/A',
-        telefono_veterinario: Veterinario?.user?.telefono || 'N/A',
-        email_veterinario: Veterinario?.user?.email || 'N/A',
+        nombre_veterinario: Veterinario?.user?.nombre ?? 'N/A',
+        identificacion_veterinario: Veterinario?.user?.identificacion ?? 'N/A',
+        telefono_veterinario: Veterinario?.user?.telefono ?? 'N/A',
+        email_veterinario: Veterinario?.user?.email ?? 'N/A',
         // tutor
         nombre_tutor: Tutor?.user?.nombre || 'N/A',
         identificacion_tutor: Tutor?.user?.identificacion || 'N/A',
@@ -145,7 +149,8 @@ const PestPage: React.FC<PestPageProps> = () => {
 
   ///* columns
   const columns = useMemo<MRT_ColumnDef<PetPopulated>[]>(
-    () => [
+    () => {
+      const baseColumns: MRT_ColumnDef<PetPopulated>[] = [
       {
         accessorKey: 'nombre_mascota',
         header: 'Nombre animal de compañía',
@@ -234,16 +239,31 @@ const PestPage: React.FC<PestPageProps> = () => {
         accessorKey: 'Veterinario.user.nombre',
         header: 'Responsable',
         size: 180,
-        Cell: ({ row }) => row.original?.Veterinario?.user?.nombre || 'N/A',
+        Cell: ({ row }) => row.original?.Veterinario?.user?.nombre ?? 'N/A',
       },
-    ],
-    []
-  );
+    ];
+    
+    if (isSupAdmin) {
+      baseColumns.push({
+        accessorKey: 'Empresa.nombre_empresa',
+        header: 'Empresa',
+        size: 180,
+        Cell: ({ row }) => emptyCellOneLevel(row, 'Empresa.nombre_empresa'),
+      });
+    }
+
+    return baseColumns;
+  },
+  [isSupAdmin] 
+
+);
+
+  
 
   return (
     <SingleTableBoxScene
       title="Animal de compañía"
-      showCreateBtn={ !!user?.rolId && user?.rolId > 1 && user?.rolId != 4}
+      showCreateBtn={ !!user?.rolId && user?.rolId > 1}
       onClickCreateBtn={handleCLickCreatePet}
     >
       <CustomSearch
@@ -295,7 +315,6 @@ const PestPage: React.FC<PestPageProps> = () => {
             ) : null}
 
             {/* pdf */}
-            <>
               <Box
                 sx={{
                   display: 'flex',
@@ -317,10 +336,8 @@ const PestPage: React.FC<PestPageProps> = () => {
                   </IconButton>
                 </Tooltip>
               </Box>
-            </>
 
             {user?.rolId && user?.rolId > 3 ? (
-              <>
                 <Tooltip title="Eliminar">
                   <IconButton
                     onClick={() => {
@@ -331,7 +348,6 @@ const PestPage: React.FC<PestPageProps> = () => {
                     <MdDelete />
                   </IconButton>
                 </Tooltip>
-              </>
             ) : null}
           </>
         )}

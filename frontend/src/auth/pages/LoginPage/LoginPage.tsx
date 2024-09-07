@@ -15,8 +15,11 @@ import { CustomTextField } from '@/shared/components';
 import { loginFormSchema } from '@/shared/utils';
 import { useLogin } from '@/store/auth';
 import { useState } from 'react';
+import { useRef } from 'react';
+import ReCAPTCHA from "react-google-recaptcha";
+import { toast } from 'react-toastify';
 
-export interface LoginPageInterface {}
+export interface LoginPageInterface { }
 
 type LoginFormData = {
   username_or_email: string;
@@ -41,6 +44,10 @@ const LoginPage: React.FC<LoginPageInterface> = () => {
   ///* handlers
   const onSubmit = (data: LoginFormData) => {
     if (!isValidLoginData) return;
+    if (!captcha.current || !captcha.current.getValue()) {
+      toast.error('Debes marcar la casilla "No soy un robot"');
+      return;
+    }
 
     loginMutation.mutate(data);
   };
@@ -48,6 +55,12 @@ const LoginPage: React.FC<LoginPageInterface> = () => {
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
+  const captcha = useRef(null);
+
+  const onChange = () => {
+  }
+
 
   return (
     <Box
@@ -119,6 +132,12 @@ const LoginPage: React.FC<LoginPageInterface> = () => {
                     }
                   />
                 </Stack>
+
+                <ReCAPTCHA
+                  ref={captcha}
+                  sitekey="6LcaJM0pAAAAAPjBwZPKM1eB5z7nilfdJK4oZREf"
+                  onChange={onChange}
+                />
 
                 <Button
                   fullWidth

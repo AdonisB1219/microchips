@@ -6,29 +6,29 @@ import { useNavigate } from 'react-router-dom';
 import { returnUrlPestPage } from '@/app/pets/pages';
 import {
   CustomAutocompleteArrString,
-  CustomAutocompleteDebouncer,
   CustomTextField,
   SampleDatePicker,
   ScrollableDialogProps,
 } from '@/shared/components';
 import { EspeciesPets, SexosPets, gridSizeMdLg6, EsterilizadoPets } from '@/shared/constants';
 import { useDebouncer } from '@/shared/hooks/useDebouncer';
-import { Tutor } from '@/shared/interfaces';
 import { petFormSchema } from '@/shared/utils';
 import { CreatePetParams, useCreatePet } from '@/store/app/pets';
-import { useFetchTutorsEnabled } from '@/store/app/propietarios';
+import { useFetchTutors, useFetchTutorsEnabled } from '@/store/app/propietarios';
 import { yupResolver } from '@hookform/resolvers/yup';
 import dayjs from 'dayjs';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
+import { useFetchEmpresas } from '@/store/app/empresas';
+import { useAuthStore } from '@/store/auth';
 
 export interface CreatePetModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-type SaveFormData = Omit<CreatePetParams, 'tutorId' | 'responsableId'> & {
-  tutorId: string;
+type SaveFormData = Omit<CreatePetParams, 'tutor' | 'responsable'> & {
+  tutor?: string;
 };
 
 const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
@@ -38,10 +38,9 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
   const [isAddMascotaToTutor, setIsAddMascotaToTutor] = useState(false);
 
   const [searchTurorTerm, setSearchTutorTerm] = useState('');
-  const [isTouched, setIsTouched] = useState(false);
 
   ///* debouncer
-  const { onChangeFilter, searchTerm } = useDebouncer({
+  const {searchTerm } = useDebouncer({
     searchTerm: searchTurorTerm,
     setSearchTerm: setSearchTutorTerm,
   });
@@ -69,12 +68,19 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
     formState: { errors },
   } = form;
 
+  const { data: fetchedTutors } = useFetchTutors();
+
+
   ///* handlers
   const onSave = async (data: SaveFormData) => {
+
+    const tutorId = fetchedTutors?.data.filter(tutor => tutor.user.email === data.tutor)?.[0]?.id ?? null;
+
+
     ///* create
     createPetMutation.mutate({
       ...data,
-      tutorId: +data.tutorId,
+      tutorId,
       fecha_implantacion: dayjs(data.fecha_implantacion).format(
         'YYYY-MM-DDTHH:mm:ss[Z]'
       ),
@@ -82,6 +88,8 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
         'YYYY-MM-DDTHH:mm:ss[Z]'
       ),
     } as any);
+
+
 
     handleClose();
   };
@@ -92,6 +100,9 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
     form.reset();
   };
 
+  const fetchEmpresas = useFetchEmpresas();
+  const fetchTutores = useFetchTutors().data?.data.map(tutor => tutor.user.email) || [];
+
   useEffect(() => {
     if (!isAddMascotaToTutor || isLoadingTutors) return;
 
@@ -101,8 +112,20 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
       );
   }, [isAddMascotaToTutor, isLoadingTutors, tutosrPagingRes]);
 
+
+  let empresas: string[] = [];
+
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
+  if (isSupAdmin) {
+    let fetchedEmpresas = fetchEmpresas.data?.data;
+    if (fetchedEmpresas) {
+      empresas = fetchedEmpresas.map(empresa => empresa.nombre_empresa);
+    }
+  }
+
   return (
-    <>
+
       <ScrollableDialogProps
         open={open}
         title="Registrar animal de compañía"
@@ -174,33 +197,18 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
               {/* form */}
               {isAddMascotaToTutor && (
                 <>
-                  <CustomAutocompleteDebouncer<Tutor>
+                  <CustomAutocompleteArrString
                     label="Tutor"
-                    name="tutorId"
-                    // options
-                    options={tutosrPagingRes?.data || []}
-                    valueKey="nombre_tutor"
-                    actualValueKey="id"
-                    defaultValue={form.getValues().tutorId || ''}
-                    optionLabelForEdit={
-                      (form.getValues()?.tutorId as any) || ''
-                    }
-                    isLoadingData={isLoadingTutors}
-                    // validation
+                    name="tutor"
+                    options={fetchTutores}
                     control={form.control}
-                    error={errors.tutorId}
-                    helperText={errors.tutorId?.message}
-                    // onChangeInput
-                    onChangeValue={() => {
-                      setIsTouched(true);
-                    }}
-                    onChangeInputText={async value => {
-                      // search with debouncer
-                      !isTouched && setIsTouched(true);
-                      onChangeFilter(value);
-                    }}
+                    defaultValue={form.getValues().tutor || ''}
+                    error={errors.tutor}
+                    helperText={'Introduce un tutor'}
+                    isLoadingData={false}
+                    size={gridSizeMdLg6}
+                    disableClearable
                   />
-
                   {/* --- pet --- */}
                   <CustomTextField
                     label="Nombre animal de compañía"
@@ -218,7 +226,7 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
                     defaultValue={form.getValues().codigo_chip}
                     error={errors.codigo_chip}
                     helperText={errors.codigo_chip?.message}
-                    
+
                   />
 
                   <CustomTextField
@@ -297,17 +305,17 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
                     required={false}
                   />
 
-<CustomAutocompleteArrString
-          label="Esterilizado/a"
-          name="esterilizado"
-          options={EsterilizadoPets}
-          control={form.control}
-          defaultValue={form.getValues().esterilizado}
-          error={errors.esterilizado}
-          isLoadingData={false}
-          helperText={errors.esterilizado?.message}
-          size={gridSizeMdLg6}
-        />
+                  <CustomAutocompleteArrString
+                    label="Esterilizado/a"
+                    name="esterilizado"
+                    options={EsterilizadoPets}
+                    control={form.control}
+                    defaultValue={form.getValues().esterilizado}
+                    error={errors.esterilizado}
+                    isLoadingData={false}
+                    helperText={errors.esterilizado?.message}
+                    size={gridSizeMdLg6}
+                  />
 
                   <CustomTextField
                     label="AGA"
@@ -319,13 +327,28 @@ const CreatePetModal: React.FC<CreatePetModalProps> = ({ open, setOpen }) => {
                     size={gridSizeMdLg6}
                     required={false}
                   />
+                  {
+                    (isSupAdmin && empresas) ?
+                      (<CustomAutocompleteArrString
+                        label="Empresa"
+                        name="empresa"
+                        options={empresas}
+                        control={form.control}
+                        defaultValue={''}
+                        error={errors.empresa?.nombre_empresa}
+                        helperText={'Introduce una empresa'}
+                        isLoadingData={false}
+                        size={gridSizeMdLg6}
+                        disableClearable
+                      />) :
+                      (<></>)
+                  }
                 </>
               )}
             </Grid>
           </Grid>
         }
       />
-    </>
   );
 };
 

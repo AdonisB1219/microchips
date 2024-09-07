@@ -7,7 +7,6 @@ export const veterinarioFormSchema = yup.object({
   // aga: yup.string().required('El campo aga es requerido'),
   nombre: yup.string().required('El campo nombre es requerido'),
   identificacion: yup.string().required('El campo identificacion es requerido').max(13, 'La identificación no puede tener más de 13 caracteres'),
-  direccion: yup.string().required('El campo direccion es requerido'),
   telefono: yup.string().required('El campo telefono es requerido'),
   email: emailYupValidation,
 

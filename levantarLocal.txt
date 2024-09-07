@@ -1,0 +1,7 @@
+Tener instalado node version superior a la 18
+Entrar a consola(git, cmd) y escribir: npm i -g prisma
+Abrir docker desktop
+entrar a alguna consola (git, cmd) en la direccion de la carpeta backend y escribir docker-compose up -d mysql
+en la misma consola escribir: prisma migrate dev --name init
+enn la misma consola escribir npm run dev
+en la consola entrar a la carpeta del frontend y escribir npm run dev

@@ -16,6 +16,7 @@ import { emptyCellOneLevel } from '@/shared/utils';
 import { useDeleteAdmin, useFetchAdmins } from '@/store/app/admin';
 import { useUiConfirmModalStore } from '@/store/ui';
 import { toast } from 'react-toastify';
+import { useAuthStore } from '@/store/auth';
 
 export const returnUrlAdmisnPage = '/dashboard/administradores';
 
@@ -24,6 +25,8 @@ export type AdmisnPageProps = {};
 const AdmisnPage: React.FC<AdmisnPageProps> = () => {
   const navigate = useNavigate();
   useIsAdmin();
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
 
   ///* global state
   const setConfirmDialog = useUiConfirmModalStore(s => s.setConfirmDialog);
@@ -97,54 +100,58 @@ const AdmisnPage: React.FC<AdmisnPageProps> = () => {
       return {
         nombre: item?.nombre,
         identificacion: String(item?.identificacion),
-        direccion: item?.direccion,
         telefono: String(item?.telefono),
         email: item?.email,
+        empresa: item?.Empresa?.nombre_empresa
       };
     });
     const csv = generateCsv(csvConfig)(flattenedData);
     download(csvConfig)(csv);
   };
+  
 
   ///* columns
   const columns = useMemo<MRT_ColumnDef<Admin>[]>(
-    () => [
-      {
-        accessorKey: 'nombre',
-        header: 'Nombre',
-        size: 180,
-        Cell: ({ row }) => emptyCellOneLevel(row, 'nombre'),
-      },
+    () => {
+      const baseColumns: MRT_ColumnDef<Admin>[] = [
+        {
+          accessorKey: 'nombre',
+          header: 'Nombre',
+          size: 180,
+          Cell: ({ row }) => emptyCellOneLevel(row, 'nombre'),
+        },
+        {
+          accessorKey: 'identificacion',
+          header: 'Identificacion',
+          size: 180,
+          Cell: ({ row }) => emptyCellOneLevel(row, 'identificacion'),
+        },
+        {
+          accessorKey: 'telefono',
+          header: 'Telefono',
+          size: 180,
+          Cell: ({ row }) => emptyCellOneLevel(row, 'telefono'),
+        },
+        {
+          accessorKey: 'email',
+          header: 'Email',
+          size: 180,
+          Cell: ({ row }) => emptyCellOneLevel(row, 'email'),
+        },
+      ];
 
-      {
-        accessorKey: 'identificacion',
-        header: 'Identificacion',
-        size: 180,
-        Cell: ({ row }) => emptyCellOneLevel(row, 'identificacion'),
-      },
+      if (isSupAdmin) {
+        baseColumns.push({
+          accessorKey: 'Empresa.nombre_empresa',
+          header: 'Empresa',
+          size: 180,
+          Cell: ({ row }) => emptyCellOneLevel(row, 'Empresa.nombre_empresa'),
+        });
+      }
 
-      {
-        accessorKey: 'direccion',
-        header: 'Direccion',
-        size: 180,
-        Cell: ({ row }) => emptyCellOneLevel(row, 'direccion'),
-      },
-
-      {
-        accessorKey: 'telefono',
-        header: 'Telefono',
-        size: 180,
-        Cell: ({ row }) => emptyCellOneLevel(row, 'telefono'),
-      },
-
-      {
-        accessorKey: 'email',
-        header: 'Email',
-        size: 180,
-        Cell: ({ row }) => emptyCellOneLevel(row, 'email'),
-      },
-    ],
-    []
+      return baseColumns;
+    },
+    [isSupAdmin] // Dependencia, para que useMemo se ejecute cuando isSuperAdmin cambie
   );
 
   return (

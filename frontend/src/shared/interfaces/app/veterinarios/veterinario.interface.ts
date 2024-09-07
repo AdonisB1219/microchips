@@ -1,4 +1,4 @@
-import { User } from '../..';
+import { Empresa, User } from '../..';
 
 export interface VeterinarisoPaginatedRes {
   ok: boolean;
@@ -12,8 +12,7 @@ export interface VeterinarisoPaginatedRes {
 export interface Veterinario {
   id: number;
   no_registro: string;
-  // especialidad: string;
-  // aga: string;
+
   user?: User;
 
   nombre: string;
@@ -22,4 +21,5 @@ export interface Veterinario {
   telefono: string;
   email: string;
   password: string;
+  empresa?: Empresa
 }

@@ -10,6 +10,7 @@ const UpdateAdminPage: React.FC<UpdateAdminPageProps> = () => {
   const { id } = useParams();
   const { data, isLoading } = useGetAdmin(+id!);
 
+
   if (isLoading) return null;
   if (!data?.id) return <Navigate to={returnUrlAdmisnPage} />;
 

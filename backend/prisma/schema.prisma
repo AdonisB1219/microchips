@@ -111,3 +111,8 @@ model Roles {
   rol   String
   user  User[]
 }
+
+model onDeleteLogs {
+  id Int @id @default(autoincrement())
+  descripcion String
+}

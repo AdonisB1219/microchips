@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
-
 import {
+  CustomAutocompleteArrString,
   CustomCellphoneTextField,
   CustomTextField,
   SingleFormBoxScene,
@@ -19,6 +19,8 @@ import {
   useUpdateAdmin,
 } from '@/store/app/admin';
 import { returnUrlAdmisnPage } from '../../../pages';
+import { useFetchEmpresas } from '@/store/app/empresas';
+import { useAuthStore } from '@/store/auth';
 
 export interface SaveAdminProps {
   title: string;
@@ -28,6 +30,7 @@ export interface SaveAdminProps {
 type SaveFormData = CreateAdminParams & {
   isEditting?: boolean;
   password?: string;
+  empresa?: string;
 };
 
 const SaveAdmin: React.FC<SaveAdminProps> = ({ title, admin }) => {
@@ -59,35 +62,88 @@ const SaveAdmin: React.FC<SaveAdminProps> = ({ title, admin }) => {
     returnUrl: returnUrlAdmisnPage,
   });
 
+  const fetchEmpresas = useFetchEmpresas();
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
+
+
   ///* handlers
   const onSave = async (data: SaveFormData) => {
-    if (!isValid) return;
 
+    if (!isValid) return;
     ///* upd
     if (admin?.id) {
-      updateAdminMutation.mutate({ id: admin.id, data });
-      return;
+      if (isSupAdmin) {
+        let empresaId = fetchEmpresas.data?.data.filter(empresa => empresa.nombre_empresa === String(data.empresa))[0].id;
+  
+        let adminData = {
+          ...data,
+          empresaId: empresaId
+        };
+  
+  
+        updateAdminMutation.mutate({id: admin.id, data: adminData});
+  
+      } else{
+        updateAdminMutation.mutate({ id: admin.id, data });
+        return;
+      }
+      
+
     }
 
-    ///* create
-    createAdminMutation.mutate(data);
+    else {
+      if (isSupAdmin) {
+        let empresaId = fetchEmpresas.data?.data.filter(empresa => empresa.nombre_empresa === String(data.empresa))[0].id;
+  
+        let admin = {
+          ...data,
+          empresaId: empresaId
+        };
+  
+  
+        createAdminMutation.mutate(admin);
+  
+      } else {
+  
+        ///* create
+        createAdminMutation.mutate(data);
+      }
+  
+    }
+
+
   };
+
 
   ///* effects
   useEffect(() => {
+    
+
     if (!admin?.id) return;
 
     reset({
       ...admin,
       isEditting: true,
+      empresa: admin.Empresa.nombre_empresa
     });
   }, [admin, reset]);
+
+  let empresasNombres: string[] = [];
+
+  if (isSupAdmin) {
+    let fetchedEmpresas = useFetchEmpresas().data?.data;
+    if (fetchedEmpresas) {
+      empresasNombres = fetchedEmpresas.map(empresa => empresa.nombre_empresa);
+    }
+  }
+
 
   return (
     <SingleFormBoxScene
       titlePage={title}
       onCancel={() => navigate(returnUrlAdmisnPage)}
-      onSave={handleSubmit(onSave, () => {})}
+      onSave={handleSubmit(onSave, () => { })}
     >
       <CustomTextField
         label="Nombre"
@@ -106,16 +162,6 @@ const SaveAdmin: React.FC<SaveAdminProps> = ({ title, admin }) => {
         defaultValue={form.getValues().identificacion}
         error={errors.identificacion}
         helperText={errors.identificacion?.message}
-        size={gridSizeMdLg6}
-      />
-
-      <CustomTextField
-        label="Direccion"
-        name="direccion"
-        control={form.control}
-        defaultValue={form.getValues().direccion}
-        error={errors.direccion}
-        helperText={errors.direccion?.message}
         size={gridSizeMdLg6}
       />
 
@@ -162,6 +208,24 @@ const SaveAdmin: React.FC<SaveAdminProps> = ({ title, admin }) => {
         }
         size={gridSizeMdLg6}
       />
+
+      {
+        (isSupAdmin) ?
+          (<CustomAutocompleteArrString
+            label="Empresa"
+            name="empresa"
+            options={empresasNombres}
+            control={form.control}
+            defaultValue={form.getValues().Empresa?.nombre_empresa}
+            error={errors.Empresa?.nombre_empresa}
+            helperText={'Introduce una empresa'}
+            isLoadingData={false}
+            size={gridSizeMdLg6}
+            disableClearable
+          />) :
+          (<></>)
+      }
+
     </SingleFormBoxScene>
   );
 };

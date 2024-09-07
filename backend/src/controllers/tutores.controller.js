@@ -9,17 +9,23 @@ export const getTutores = async (req, res, next) => {
     const search = req.query?.nombre;
     const skip = (page - 1) * limit;
 
-    const tutores = await prisma.tutor.findMany({
-      skip: skip,
-      take: limit,
-      where: {
-        user: {
-          nombre: {
-            contains: search,
-          },
-          empresaId: req.authenticatedUser.empresaId
+    const filterOptions = {
+      user: {
+        nombre: {
+          contains: search,
         },
       },
+    };
+
+
+    if (req.authenticatedUser.rolId != 4) {
+      filterOptions.user.empresaId = req.authenticatedUser.empresaId;
+    }
+
+    const tutores = await prisma.tutor.findMany({
+      where: filterOptions,
+      skip: skip,
+      take: limit,
       include: {
         user: {
           select: {
@@ -28,6 +34,7 @@ export const getTutores = async (req, res, next) => {
             identificacion: true,
             telefono: true,
             email: true,
+            Empresa: true
           },
         },
       },
@@ -75,6 +82,12 @@ export const getTutor = async (req, res, next) => {
             identificacion: true,
             telefono: true,
             email: true,
+            Empresa: {
+              select: {
+                nombre_empresa: true,
+                id: true
+              }
+            }
           },
         },
       },
@@ -87,7 +100,7 @@ export const getTutor = async (req, res, next) => {
       });
     }
 
-    if(req.authenticatedUser.empresaId != tutor.user.empresaId && req.authenticatedUser.rolId != 4){
+    if(req.authenticatedUser.Empresa.id != tutor.user.Empresa.id && req.authenticatedUser.rolId != 4){
       res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
     }
 
@@ -96,6 +109,7 @@ export const getTutor = async (req, res, next) => {
     next(error);
   }
 };
+
 
 export const updateTutor = async (req, res, next) => {
   const { id } = req.params;
@@ -110,7 +124,7 @@ export const updateTutor = async (req, res, next) => {
       include: {
         user: {
           select: {
-            empresaId: true
+            Empresa: true
           }
         }
       }
@@ -123,7 +137,7 @@ export const updateTutor = async (req, res, next) => {
       });
     }
 
-    if(req.authenticatedUser.empresaId != tutor.user.empresaId && req.authenticatedUser.rolId != 4){
+    if(req.authenticatedUser.empresaId != tutor.user.Empresa.id && req.authenticatedUser.rolId != 4){
       res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
     }
 
@@ -170,7 +184,8 @@ export const deleteTutor = async (req, res, next) => {
       include: {
         user: {
           select: {
-            empresaId: true
+            empresaId: true,
+            email: true
           }
         }
       }
@@ -193,6 +208,13 @@ export const deleteTutor = async (req, res, next) => {
         id: tutor.userId,
       },
     });
+
+    
+    await prisma.onDeleteLogs.create({
+      data: {
+          descripcion: `El usuario-tutor ${tutor.userId}  - ${tutor.user.email} fue eliminado por el usuario ${req.authenticatedUser.id} - ${req.authenticatedUser.email}`
+      }
+  });
 
     res.status(200).json({
       ok: true,

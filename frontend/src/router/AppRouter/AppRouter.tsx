@@ -10,7 +10,6 @@ import {
   UpdateAdminPage,
 } from '@/app/admin/pages';
 import { DashboardHome } from '@/app/home/pages/DashboardHome';
-import { HomePage } from '@/app/home/pages/HomePage';
 import { AppLayout } from '@/app/layouts';
 import {
   CreatePetPage,
@@ -30,23 +29,23 @@ import {
 } from '@/app/veterinarios/pages';
 import { LoginPage } from '@/auth/pages';
 import { PrivateRoutes } from '../PrivateRoutes';
+import { EmpresasPage } from '@/app/empresas/pages/EmpresasPage';
+import { CreateEmpresaPage } from '@/app/empresas/pages';
+import UpdateEmpresaPage from '@/app/empresas/pages/UpdateEmpresaPage/UpdateEmpresaPage';
 
 const AppRouter = createBrowserRouter([
   ///* Free Routes
-  {
-    path: '/',
-    element: <HomePage />,
-  },
+
 
   ////* Auth
   {
-    path: '/auth',
+    path: '/',
     element: (
       <AuthRoutes>
         <AuthLayout />
       </AuthRoutes>
     ),
-    children: [{ path: 'login', element: <LoginPage /> }],
+    children: [{ path: '/', element: <LoginPage /> }],
   },
 
   ////* Private Routes
@@ -124,6 +123,22 @@ const AppRouter = createBrowserRouter([
         element: <UpdateAdminPage />,
       },
 
+      { path: '*', element: <Navigate to="/" /> },
+
+
+      //* empresas
+      {
+        path: 'empresas',
+        element: <EmpresasPage />,
+      },
+      {
+        path: 'empresas/crear',
+        element: <CreateEmpresaPage />,
+      },
+      {
+        path: 'empresas/editar/:id',
+        element: <UpdateEmpresaPage />,
+      },
       { path: '*', element: <Navigate to="/" /> },
     ],
   },

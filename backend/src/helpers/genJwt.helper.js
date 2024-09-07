@@ -8,7 +8,7 @@ export const genJWT = id => {
     jwt.sign(
       { id },
       SECRETORPRIVATEKEY_JWT,
-      { expiresIn: '24h' },
+      { expiresIn: '6h' },
       (err, token) => {
         if (err) {
           console.log(err);

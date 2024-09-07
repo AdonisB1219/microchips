@@ -1,3 +1,5 @@
+import { Empresa } from "../app";
+
 export interface LoginResponse {
   ok: boolean;
   message: string;
@@ -13,5 +15,6 @@ export interface User {
   telefono: string;
   email: string;
   rolId: number;
+  Empresa: Empresa
 
 }

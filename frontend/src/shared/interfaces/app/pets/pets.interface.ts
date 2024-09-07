@@ -1,4 +1,4 @@
-import { User } from '../..';
+import { Empresa, User } from '../..';
 import { Veterinario } from '../veterinarios/veterinario.interface';
 
 export interface PetsPaginatedRes {
@@ -26,6 +26,7 @@ export interface Pet {
   esterilizado: string;
   tutorId: number;
   responsableId: number;
+  empresa?: Empresa
 }
 
 export interface PetForm {
@@ -74,6 +75,7 @@ export interface Tutor {
   id: number;
   observaciones: string;
   nombre_tutor?: string;
+  direccion: string;
   userId: number;
   user: User;
 }

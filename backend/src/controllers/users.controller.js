@@ -1,6 +1,7 @@
 import bcryptjs from 'bcryptjs';
 
 import { prisma } from '../db/mysql/index.js';
+import { filter } from 'compression';
 
 export const signUpVeterinarian = async (req, res, next) => {
   try {
@@ -74,6 +75,8 @@ export const signUpTutor = async (req, res, next) => {
 
     const hashedPassword = await bcryptjs.hash(password, 10);
 
+    const empresaId = (req.authenticatedUser.rolId === 4)? req.body.empresaId : req.authenticatedUser.empresaId;
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -82,7 +85,7 @@ export const signUpTutor = async (req, res, next) => {
         nombre,
         identificacion,
         rolId: 1,
-        empresaId: req.authenticatedUser.empresaId
+        empresaId
       },
     });
 
@@ -123,7 +126,6 @@ export const signUpAdmin = async (req, res, next) => {
         message: 'El correo ya ha sido registrado',
       });
     }
-    console.log("authuser -> ", req.authenticatedUser);
 
 
     const empresaId = (req.authenticatedUser.rolId === 4)? req.body.empresaId : req.authenticatedUser.empresaId;
@@ -142,6 +144,21 @@ export const signUpAdmin = async (req, res, next) => {
       },
     });
     delete user.password;
+
+    const vetExists = await prisma.veterinario.findFirst({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    if(!vetExists) {
+      await prisma.veterinario.create( {
+        data: {
+          no_registro: '1111111',
+          userId: user.id
+        }
+      })
+    }
 
 
 
@@ -163,23 +180,38 @@ export const getAdmins = async (req, res, next) => {
     let filterOptions = {
       nombre: {
         contains: adminName,
+      },      
+      rolId: {
+        in: [3, 4],
       },
-      rolId: 3,
     };
 
+    let include = {};
+
     if (req.authenticatedUser.rolId != 4 ){
-      filterOptions.empresaId = req.authenticatedUser.empresaId
+      filterOptions.empresaId = req.authenticatedUser.empresaId;
+      filterOptions.rolId = 3;
+    } if(req.authenticatedUser.rolId === 4) {
+      include = {
+        Empresa: {
+          select: {
+            nombre_empresa: true,
+          },
+        }
+      }
     }
-    
+
     const admins = await prisma.user.findMany({
       where: filterOptions,
       skip: skip,
       take: limit,
+      include: include
     });
 
     const total = await prisma.user.count({
       where: filterOptions
     });
+
     const totalPages = Math.ceil(total / limit);
 
     const baseUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
@@ -205,6 +237,13 @@ export const getAdmin = async (req, res, next) => {
         id: +req.params.id,
         rolId: 3,
       },
+      include: {
+        Empresa: {
+          select: {
+            nombre_empresa: true
+          }
+        }
+      }
     });
 
 
@@ -226,6 +265,7 @@ export const getAdmin = async (req, res, next) => {
 };
 
 export const updateAdmin = async (req, res, next) => {
+  
   try {
     const { email, telefono, nombre, identificacion, password } =
       req.body;
@@ -244,11 +284,18 @@ export const updateAdmin = async (req, res, next) => {
           .json({ ok: false, message: 'Admin no encontrado' });
       }
   
-      if(req.authenticatedUser.empresaId != existingAdmin.empresaId && req.authenticatedUser.rolId != 4){
+      if(req.authenticatedUser.Empresa.id != existingAdmin.empresaId && req.authenticatedUser.rolId != 4){
         res.status(401).json({ ok: false, msg: 'No tienes permisos para realizar esta accion' });
       }
 
+
     const updatedPassword = await bcryptjs.hash(password || '', 10);
+
+    let empresaId;
+
+    if(req.authenticatedUser.rolId === 4){
+      empresaId = req.body.empresaId; 
+    }
 
     const admin = await prisma.user.update({
       where: {
@@ -259,11 +306,13 @@ export const updateAdmin = async (req, res, next) => {
         telefono,
         nombre,
         identificacion,
+        empresaId,
         ...(password && { password: updatedPassword }),
       },
     });
     res.status(200).json({ ok: true, admin });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 };
@@ -293,6 +342,14 @@ export const deleteAdmin = async (req, res, next) => {
         id: +req.params.id,
       },
     });
+
+    
+    await prisma.onDeleteLogs.create({
+      data: {
+          descripcion: `El usuario-adminstrador ${req.params.id} - ${existingAdmin.email} fue eliminado por el usuario ${req.authenticatedUser.id} - ${req.authenticatedUser.email}`
+      }
+  });
+
     res.status(200).json({ ok: true, admin });
   } catch (error) {
     next(error);

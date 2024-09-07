@@ -18,7 +18,7 @@ export const petFormSchema = yup.object({
   sexo: yup.string().required('El campo sexo es requerido'),
   ubicacion: yup.string().required('El campo informacion adicional es requerido'),
   esterilizado: yup.string().required('El campo Esterilizado/a es requerido'),
-  tutorId: yup.string().required('El campo tutor es requerido'),
+  tutor: yup.string().required('El campo tutor es requerido'),
   aga: yup.string().required('El campo aga es requerido'),
 });
 

@@ -44,6 +44,25 @@ export const createSuperAdminUser = async () => {
         },
       });
 
+      const existingVet = await prisma.veterinario.findFirst({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if(!existingVet){
+        try {
+          await prisma.veterinario.create({
+            data: {
+              no_registro: '1111111',
+              userId: user.id
+            }
+          });
+        } catch(e) {
+          console.log(e)
+        }
+      }
+
     } catch (error) {
       console.log('Error creating admin user:', error);
       process.exit(1);

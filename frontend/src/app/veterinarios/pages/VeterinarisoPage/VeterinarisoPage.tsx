@@ -19,6 +19,7 @@ import {
 } from '@/store/app/veterinarios';
 import { useUiConfirmModalStore } from '@/store/ui';
 import { toast } from 'react-toastify';
+import { useAuthStore } from '@/store/auth';
 
 export const returnUrlVeterinarisoPage = '/dashboard/veterinarios';
 
@@ -27,6 +28,8 @@ export type VeterinarisoPageProps = {};
 const VeterinarisoPage: React.FC<VeterinarisoPageProps> = () => {
   const navigate = useNavigate();
   useIsAdmin();
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
 
   ///* global state
   const setConfirmDialog = useUiConfirmModalStore(s => s.setConfirmDialog);
@@ -114,7 +117,8 @@ const VeterinarisoPage: React.FC<VeterinarisoPageProps> = () => {
 
   ///* columns
   const columns = useMemo<MRT_ColumnDef<Veterinario>[]>(
-    () => [
+    () => {
+      const baseColumns: MRT_ColumnDef<Veterinario>[] = [
       {
         accessorKey: 'nombre',
         header: 'Nombre',
@@ -136,27 +140,6 @@ const VeterinarisoPage: React.FC<VeterinarisoPageProps> = () => {
         Cell: ({ row }) => emptyCellOneLevel(row, 'no_registro'),
       },
 
-      // {
-      //   accessorKey: 'aga',
-      //   header: 'Aga',
-      //   size: 180,
-      //   Cell: ({ row }) => emptyCellOneLevel(row, 'aga'),
-      // },
-
-      // {
-      //   accessorKey: 'especialidad',
-      //   header: 'Especialidad',
-      //   size: 180,
-      //   Cell: ({ row }) => emptyCellOneLevel(row, 'especialidad'),
-      // },
-
-      {
-        accessorKey: 'direccion',
-        header: 'Direccion',
-        size: 180,
-        Cell: ({ row }) => row.original?.user?.direccion,
-      },
-
       {
         accessorKey: 'telefono',
         header: 'Telefono',
@@ -169,9 +152,20 @@ const VeterinarisoPage: React.FC<VeterinarisoPageProps> = () => {
         header: 'Email',
         size: 180,
         Cell: ({ row }) => row.original?.user?.email,
-      },
-    ],
-    []
+      },];
+
+      if (isSupAdmin) {
+        baseColumns.push({
+          accessorKey: 'user.Empresa.nombre_empresa',
+          header: 'Empresa',
+          size: 180,
+          Cell: ({ row }) => emptyCellOneLevel(row, 'user.Empresa.nombre_empresa'),
+        });
+      }
+
+        return baseColumns
+    },
+    [isSupAdmin]
   );
 
   return (

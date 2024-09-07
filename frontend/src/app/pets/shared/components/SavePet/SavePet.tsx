@@ -23,6 +23,8 @@ import dayjs from 'dayjs';
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import { returnUrlPestPage } from '../../../pages';
+import { useFetchEmpresas } from '@/store/app/empresas';
+import { useAuthStore } from '@/store/auth';
 
 export interface SavePetProps {
   title: string;
@@ -69,6 +71,18 @@ const SavePet: React.FC<SavePetProps> = ({
     reset,
     formState: { errors },
   } = form;
+
+  let empresas: string[] = [];
+
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
+
+  if (isSupAdmin) {
+    let fetchedEmpresas = useFetchEmpresas().data?.data;
+    if (fetchedEmpresas) {
+      empresas = fetchedEmpresas.map(empresa => empresa.nombre_empresa);
+    }
+  }
 
   ///* mutations
   const createPetMutation = useCreatePet({
@@ -120,8 +134,6 @@ const SavePet: React.FC<SavePetProps> = ({
         'YYYY-MM-DDTHH:mm:ss[Z]'
       ),
     } as any);
-
-    console.log("DATA SUBMITED -> ", data);
 
   };
 
@@ -291,6 +303,22 @@ const SavePet: React.FC<SavePetProps> = ({
           size={gridSizeMdLg6}
           disabled={onlyView}
         />
+                      {
+        (isSupAdmin ) ?
+          (<CustomAutocompleteArrString
+            label="Empresa"
+            name="empresa"
+            options={empresas}
+            control={form.control}
+            defaultValue={''}
+            error={errors.empresa?.nombre_empresa}
+            helperText={'Introduce una empresa'}
+            isLoadingData={false}
+            size={gridSizeMdLg6}
+            disableClearable
+          />) :
+          (<></>)
+      }
       </CustomTabPanel>
 
       <CustomTabPanel value={tabValue} index={2}>
@@ -380,7 +408,24 @@ const SavePet: React.FC<SavePetProps> = ({
           helperText={errors.observaciones?.message}
           disabled={onlyView}
         />
+              {
+        (isSupAdmin ) ?
+          (<CustomAutocompleteArrString
+            label="Empresa"
+            name="empresa"
+            options={empresas}
+            control={form.control}
+            defaultValue={''}
+            error={errors.empresa?.nombre_empresa}
+            helperText={'Introduce una empresa'}
+            isLoadingData={false}
+            size={gridSizeMdLg6}
+            disableClearable
+          />) :
+          (<></>)
+      }
       </CustomTabPanel>
+
     </TabsFormBoxScene>
   );
 };

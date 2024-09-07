@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  CustomAutocompleteArrString,
   CustomCellphoneTextField,
   CustomTextField,
   SingleFormBoxScene,
@@ -19,6 +20,8 @@ import {
 import { IconButton, InputAdornment } from '@mui/material';
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { returnUrlTutosrPage } from '../../../pages';
+import { useFetchEmpresas } from '@/store/app/empresas';
+import { useAuthStore } from '@/store/auth';
 
 export interface SaveTutorProps {
   title: string;
@@ -33,6 +36,7 @@ type SaveFormData = CreateTutorParams & {
   identificacion?: string;
   nombre?: string;
   observaciones?: string;
+  empresa?: string;
   isEditting?: boolean;
 };
 
@@ -43,6 +47,12 @@ const SaveTutor: React.FC<SaveTutorProps> = ({ title, tutor }) => {
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
+
+  const fetchEmpresas = useFetchEmpresas();
+
 
   ///* form
   const form = useForm<SaveFormData>({
@@ -70,23 +80,62 @@ const SaveTutor: React.FC<SaveTutorProps> = ({ title, tutor }) => {
 
   ///* handlers
   const onSave = async (data: SaveFormData) => {
+
     if (!isValid) return;
 
     ///* upd
     if (tutor?.id) {
-      updateTutorMutation.mutate({ id: tutor?.id, data });
+      
+    if (isSupAdmin) {
+      let empresaId = fetchEmpresas.data?.data.filter(empresa => empresa.nombre_empresa === String(data.empresa))[0].id;
+
+      let tutorAdmin = {
+        ...data,
+        empresaId: empresaId
+      };
+
+      updateTutorMutation.mutate({id: tutor.id, data: tutorAdmin});
+
+    } else {
+      //* create
+      updateTutorMutation.mutate({id: tutor.id, data: tutor});
+    }
       return;
     }
 
-    ///* create
+    if (isSupAdmin) {
+      let empresaId = fetchEmpresas.data?.data.filter(empresa => empresa.nombre_empresa === String(data.empresa))[0].id;
+
+      let tutor = {
+        ...data,
+        empresaId: empresaId
+      };
+
+      createTutorMutation.mutate(tutor);
+
+    } else {
+      //* create
     createTutorMutation.mutate(data);
+    }
+
+
   };
+  
+  let empresas: string[] = [];
+
+  if (isSupAdmin) {
+    let fetchedEmpresas = useFetchEmpresas().data?.data;
+    if (fetchedEmpresas) {
+      empresas = fetchedEmpresas.map(empresa => empresa.nombre_empresa);
+    }
+  }
 
   ///* effects
   useEffect(() => {
     if (!tutor?.id) return;
 
     const user = tutor.user;
+    
     reset({
       ...tutor,
 
@@ -97,16 +146,18 @@ const SaveTutor: React.FC<SaveTutorProps> = ({ title, tutor }) => {
       telefono: user.telefono,
       identificacion: user.identificacion,
       nombre: user.nombre,
+      empresa: user.Empresa?.nombre_empresa,
 
       isEditting: true,
     });
+    
   }, [tutor, reset]);
 
   return (
     <SingleFormBoxScene
       titlePage={title}
       onCancel={() => navigate(returnUrlTutosrPage)}
-      onSave={handleSubmit(onSave, () => {})}
+      onSave={handleSubmit(onSave, (errors) => { console.log(errors);})}
     >
       <CustomTextField
         label="nombre"
@@ -138,7 +189,7 @@ const SaveTutor: React.FC<SaveTutorProps> = ({ title, tutor }) => {
         size={gridSizeMdLg6}
       />
 
-      <CustomTextField
+<CustomTextField
         label="direccion"
         name="direccion"
         control={form.control}
@@ -191,6 +242,22 @@ const SaveTutor: React.FC<SaveTutorProps> = ({ title, tutor }) => {
         }
         size={gridSizeMdLg6}
       />
+                    {
+        (isSupAdmin ) ?
+          (<CustomAutocompleteArrString
+            label="Empresa"
+            name="empresa"
+            options={empresas}
+            control={form.control}
+            defaultValue={form.getValues().empresa ?? ''}
+            error={errors.user?.Empresa?.nombre_empresa}
+            helperText={'Introduce una empresa'}
+            isLoadingData={false}
+            size={gridSizeMdLg6}
+            disableClearable
+          />) :
+          (<></>)
+      }
     </SingleFormBoxScene>
   );
 };

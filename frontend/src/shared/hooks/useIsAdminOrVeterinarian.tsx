@@ -9,7 +9,7 @@ export const useIsAdminOrVeterinarian = () => {
   const user = useAuthStore(s => s.user);
 
   useEffect(() => {
-    if (user?.rolId && user?.rolId < 2 || !user?.rolId) {
+    if (user?.rolId && user?.rolId < 2 || !user?.rolId) {      
       toast.error('No tienes permisos para ver esta página');
       navigate('/', { replace: true });
     }

@@ -5,9 +5,9 @@ import { emailYupValidation } from '../../auth.validacion-schema';
 export const adminFormSchema = yup.object({
   nombre: yup.string().required('El campo nombre es requerido'),
   identificacion: yup.string().required('El campo identificacion es requerido'),
-  direccion: yup.string().required('El campo direccion es requerido'),
   telefono: yup.string().required('El campo telefono es requerido'),
   email: emailYupValidation,
+  empresa: yup.string().optional(),
 
   isEditting: yup.boolean().optional(),
   password: yup

@@ -18,6 +18,9 @@ export const protectWithJwt = async (req, res, next) => {
       where: {
         id,
       },
+      include: {
+        Empresa: true
+      }
     });
 
     if (!user)

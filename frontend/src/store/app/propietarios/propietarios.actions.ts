@@ -124,6 +124,7 @@ export const getTutor = (id: number) => {
   return get<Propietario>(`/tutors/${id}`, true);
 };
 
+
 export const createTutor = (data: CreateTutorParams) => {
   return post<Propietario>('/tutors/', data, true);
 };

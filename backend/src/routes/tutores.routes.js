@@ -26,4 +26,5 @@ router
   .put([protectWithJwt, verifyAdmin], updateTutor)
   .delete([protectWithJwt, verifyAdmin], deleteTutor);
 
+
 export default router;

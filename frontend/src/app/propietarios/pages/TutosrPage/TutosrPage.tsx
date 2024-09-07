@@ -14,6 +14,8 @@ import { Propietario, Tutor } from '@/shared/interfaces';
 import { useDeleteTutor, useFetchTutors } from '@/store/app/propietarios';
 import { useUiConfirmModalStore } from '@/store/ui';
 import { toast } from 'react-toastify';
+import { emptyCellOneLevel } from '@/shared/utils';
+import { useAuthStore } from '@/store/auth';
 
 export const returnUrlTutosrPage = '/dashboard/tutores';
 
@@ -21,6 +23,9 @@ export type TutosrPageProps = {};
 
 const TutosrPage: React.FC<TutosrPageProps> = () => {
   const navigate = useNavigate();
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
+
 
   ///* global state
   const setConfirmDialog = useUiConfirmModalStore(s => s.setConfirmDialog);
@@ -109,7 +114,8 @@ const TutosrPage: React.FC<TutosrPageProps> = () => {
 
   ///* columns
   const columns = useMemo<MRT_ColumnDef<Tutor>[]>(
-    () => [
+    () => {
+      const baseColumns:MRT_ColumnDef<Tutor>[] = [
       {
         accessorKey: 'nombre',
         header: 'Nombre',
@@ -124,18 +130,19 @@ const TutosrPage: React.FC<TutosrPageProps> = () => {
         Cell: ({ row }) => row.original?.user?.identificacion || 'N/A',
       },
 
-      {
-        accessorKey: 'direccion',
-        header: 'Direccion',
-        size: 180,
-        Cell: ({ row }) => row.original?.user?.direccion || 'N/A',
-      },
 
       {
         accessorKey: 'telefono',
         header: 'Telefono',
         size: 180,
         Cell: ({ row }) => row.original?.user?.telefono || 'N/A',
+      },
+
+      {
+        accessorKey: 'direccion',
+        header: 'Direccion',
+        size: 180,
+        Cell: ({ row }) => row.original?.direccion,
       },
 
       {
@@ -151,8 +158,19 @@ const TutosrPage: React.FC<TutosrPageProps> = () => {
         size: 240,
         Cell: ({ row }) => row.original?.observaciones || 'N/A',
       },
-    ],
-    []
+    ];
+
+    if (isSupAdmin) {
+      baseColumns.push({
+        accessorKey: 'user.Empresa.nombre_empresa',
+        header: 'Empresa',
+        size: 180,
+        Cell: ({ row }) => emptyCellOneLevel(row, 'user.Empresa.nombre_empresa'),
+      });
+    }
+      return baseColumns;
+  },
+    [isSupAdmin]
   );
 
   return (

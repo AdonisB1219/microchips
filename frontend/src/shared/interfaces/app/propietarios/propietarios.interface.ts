@@ -1,4 +1,4 @@
-import { User } from '../..';
+import { Empresa, User } from '../..';
 
 export interface PropietarioPaginatedRes {
   ok: boolean;

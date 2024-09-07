@@ -8,7 +8,6 @@ export const getVeterinarians = async (req, res, next) => {
     const limit = +req.query.page_size || 10;
     const search = req.query?.nombre;
     const skip = (page - 1) * limit;
-    console.log(req.authenticatedUser);
 
     const empresaId = req.authenticatedUser.empresaId;
     const userRole = req.authenticatedUser.rolId;
@@ -24,7 +23,6 @@ export const getVeterinarians = async (req, res, next) => {
     if (userRole != 4) {
       filterOptions.user.empresaId = empresaId;
     }
-
 
     const veterinarians = await prisma.veterinario.findMany({
       skip: skip,
@@ -107,11 +105,6 @@ export const getVeterinarian = async (req, res, next) => {
 export const createVeterinarian = async (req, res, next) => {
   const { email, password, telefono, nombre, identificacion, no_registro, especialidad } =
     req.body;
-
-  if (req.authenticatedUser.rolId !== 3)
-    return res
-      .status(400)
-      .json({ ok: false, message: 'Debes tener permisos de administrador para realizar esta accion' });
 
   try {
     const hashedPassword = await bcryptjs.hash(password, 10);
@@ -209,7 +202,6 @@ export const updateVeterinarian = async (req, res, next) => {
 
 export const deleteVeterinarian = async (req, res, next) => {
   const { id } = req.params;
-  console.log(id);
 
   try {
     const veterinarian = await prisma.veterinario.findUnique({
@@ -220,7 +212,8 @@ export const deleteVeterinarian = async (req, res, next) => {
         user: {
           select: {
             rolId: true,
-            empresaId: true
+            empresaId: true,
+            email: true
           }
         },
       },
@@ -240,6 +233,13 @@ export const deleteVeterinarian = async (req, res, next) => {
         id: veterinarian.userId,
       },
     });
+
+    
+    await prisma.onDeleteLogs.create({
+      data: {
+          descripcion: `El veterinario ${veterinarian.userId} - ${veterinarian.user.email} fue eliminado por el usuario ${req.authenticatedUser.id} - ${req.authenticatedUser.email}`
+      }
+  });
 
     res
       .status(200)

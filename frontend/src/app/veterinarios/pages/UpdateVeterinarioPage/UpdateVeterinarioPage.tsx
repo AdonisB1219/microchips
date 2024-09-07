@@ -1,5 +1,4 @@
 import { Navigate, useParams } from 'react-router-dom';
-
 import { useGetVeterinario } from '@/store/app/veterinarios';
 import { returnUrlVeterinarisoPage } from '../VeterinarisoPage/VeterinarisoPage';
 import { SaveVeterinario } from './../../shared/components';

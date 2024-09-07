@@ -14,7 +14,7 @@ export const getPets = async (req, res, next) => {
     let filterOptions = {
       AND: [
         {
-          empresaId: req.authenticatedUser.empresaId
+          empresaId: req.authenticatedUser.Empresa.id
         },
         {
           OR: [
@@ -90,6 +90,11 @@ export const getPets = async (req, res, next) => {
             },
           },
         },
+        Empresa: {
+          select: {
+            nombre_empresa: true
+          }
+        }
       },
     });
 
@@ -246,10 +251,11 @@ export const getPet = async (req, res, next) => {
             },
           },
         },
+        Empresa: true
       },
     });
 
-    if(req.authenticatedUser.empresaId != pet.empresaId && req.authenticatedUser.rolId != 4){
+    if(req.authenticatedUser.Empresa.id != pet.Empresa.id && req.authenticatedUser.rolId != 4){
       res.status(401).json({ ok: false, msg: 'No tienes permisos para ver este registro' });
     }
 
@@ -273,11 +279,14 @@ export const createPet = async (req, res, next) => {
     tutorId,
     observaciones,
     fecha_nacimiento,
+    empresa
   } = req.body;
+
 
   let userTutor;
   let tutor;
   let pet;
+  let veterinario;
 
   try {
     // already exists codigo_chip
@@ -306,18 +315,6 @@ export const createPet = async (req, res, next) => {
           .json({ ok: false, message: 'Tutor ya registrado con ese email' });
       }
 
-      const veterinario = await prisma.veterinario.findFirst({
-        where: {
-          userId: req.authenticatedUser.id,
-        },
-      });
-  
-      if (!veterinario) {
-        return res
-          .status(400)
-          .json({ ok: false, message: 'Debes estar logeado como veterinario para realizar este registro' });
-      }
-
       const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 
       userTutor = await prisma.user.create({
@@ -341,6 +338,31 @@ export const createPet = async (req, res, next) => {
       });
     }
 
+    veterinario = await prisma.veterinario.findFirst({
+      where: {
+        userId: req.authenticatedUser.id,
+      },
+    });
+
+    if (!veterinario) {
+      return res
+        .status(400)
+        .json({ ok: false, message: 'No tienes permisos para realizar este registro' });
+    }
+
+    let empresaObj;
+
+    if (req.authenticatedUser.rolId === 4) {
+      empresaObj = await prisma.empresa.findFirst({
+        where: {
+          nombre_empresa: empresa
+        }
+      }
+      );
+    }
+
+    let empresaId = empresaObj ? empresaObj.id : req.authenticatedUser.empresaId;
+
 
     pet = await prisma.mascota.create({
       data: {
@@ -356,12 +378,13 @@ export const createPet = async (req, res, next) => {
         aga,
         tutorId: tutorId || tutor.id,
         veterinarioId: veterinario.id,
-        empresaId: req.authenticatedUser.empresaId
+        empresaId: empresaId
       },
     });
 
     res.status(201).json({ ok: true, pet });
   } catch (error) {
+    console.log(error);
     if (pet) {
       await prisma.mascota.delete({ where: { id: pet?.id } });
     }
@@ -500,6 +523,12 @@ export const deletePet = async (req, res, next) => {
         id: +id,
       },
     });
+
+    await prisma.onDeleteLogs.create({
+      data: {
+          descripcion: `La mascota ${pet.nombre_mascota} fue eliminada por el usuario ${req.authenticatedUser.id}`
+      }
+  });
 
     res.status(200).json({ ok: true, message: 'Mascota eliminada con éxito!' });
   } catch (error) {

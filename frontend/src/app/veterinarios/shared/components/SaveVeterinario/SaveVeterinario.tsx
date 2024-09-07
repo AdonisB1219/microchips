@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  CustomAutocompleteArrString,
   CustomCellphoneTextField,
   CustomTextField,
   SingleFormBoxScene,
@@ -20,6 +21,8 @@ import {
 import { IconButton, InputAdornment } from '@mui/material';
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { returnUrlVeterinarisoPage } from '../../../pages';
+import { useFetchEmpresas } from '@/store/app/empresas';
+import { useAuthStore } from '@/store/auth';
 
 export interface SaveVeterinarioProps {
   title: string;
@@ -63,8 +66,6 @@ const SaveVeterinario: React.FC<SaveVeterinarioProps> = ({
 
   ///* handlers
   const onSave = async (data: SaveFormData) => {
-
-    console.log(data);
     if (!isValid) return;
 
     ///* upd
@@ -76,6 +77,19 @@ const SaveVeterinario: React.FC<SaveVeterinarioProps> = ({
     ///* create
     createVeterinarioMutation.mutate(data);
   };
+
+  
+  let empresas: string[] = [];
+
+  const user = useAuthStore(s => s.user);
+  const isSupAdmin = user?.rolId && user?.rolId > 3;
+
+  if (isSupAdmin) {
+    let fetchedEmpresas = useFetchEmpresas().data?.data;
+    if (fetchedEmpresas) {
+      empresas = fetchedEmpresas.map(empresa => empresa.nombre_empresa);
+    }
+  }
 
   ///* effects
   useEffect(() => {
@@ -150,15 +164,6 @@ const SaveVeterinario: React.FC<SaveVeterinarioProps> = ({
       />
 
       <CustomTextField
-        label="Direccion"
-        name="direccion"
-        control={form.control}
-        defaultValue={form.getValues().direccion}
-        error={errors.direccion}
-        helperText={errors.direccion?.message}
-      />
-
-      <CustomTextField
         label="Email"
         name="email"
         type="email"
@@ -191,6 +196,22 @@ const SaveVeterinario: React.FC<SaveVeterinarioProps> = ({
         }
         size={gridSizeMdLg6}
       />
+            {
+        (isSupAdmin && empresas) ?
+          (<CustomAutocompleteArrString
+            label="Empresa"
+            name="empresa"
+            options={empresas}
+            control={form.control}
+            defaultValue={''}
+            error={errors.empresa?.nombre_empresa}
+            helperText={'Introduce una empresa'}
+            isLoadingData={false}
+            size={gridSizeMdLg6}
+            disableClearable
+          />) :
+          (<></>)
+      }
     </SingleFormBoxScene>
   );
 };

@@ -68,7 +68,7 @@ export const createEmpresa = async (req, res, next) => {
             data: {
                 nombre_empresa,
                 direccion,
-                telefono, 
+                telefono,
                 email
             },
         });
@@ -99,8 +99,14 @@ export const deleteEmpresa = async (req, res, next) => {
 
         await prisma.empresa.delete({
             where: {
-                id
+                id: parseInt(id)
             },
+        });
+
+        await prisma.onDeleteLogs.create({
+            data: {
+                descripcion: `La empresa ${empresa.nombre_empresa} fue eliminada por el usuario ${req.authenticatedUser.id} - ${req.authenticatedUser.email}`
+            }
         });
 
         res.status(200).json({
@@ -124,12 +130,12 @@ export const getEmpresa = async (req, res, next) => {
 
         if (!empresa) {
             return res.status(404).json({
-              ok: false,
-              message: 'Empresa no encontrado',
+                ok: false,
+                message: 'Empresa no encontrado',
             });
-          }
-      
-          res.status(200).json(empresa);
+        }
+
+        res.status(200).json(empresa);
 
     } catch (error) {
         next(error);
@@ -139,40 +145,41 @@ export const getEmpresa = async (req, res, next) => {
 
 export const updateEmpresa = async (req, res, next) => {
     const { id } = req.params;
-    const { direccion, telefono, email} =
-      req.body;
-  
+    const { direccion, telefono, email, nombre_empresa } =
+        req.body;
+
     try {
-      const empresa = await prisma.empresa.findUnique({
-        where: {
-          id: parseInt(id),
-        },
-      });
-  
-      if (!empresa) {
-        return res.status(404).json({
-          ok: false,
-          message: 'Empresa no encontrado',
+        const empresa = await prisma.empresa.findUnique({
+            where: {
+                id: parseInt(id),
+            },
         });
-      }
-  
-      const user = await prisma.empresa.update({
-        where: {
-          id: empresa.id
-        },
-        data: {
-          email,
-          direccion,
-          telefono
-        },
-      });
-  
-      res.status(200).json({
-        ok: true,
-        message: 'Empresa actualizado con éxito!',
-        data: user,
-      });
+
+        if (!empresa) {
+            return res.status(404).json({
+                ok: false,
+                message: 'Empresa no encontrado',
+            });
+        }
+
+        const user = await prisma.empresa.update({
+            where: {
+                id: empresa.id
+            },
+            data: {
+                email,
+                direccion,
+                telefono,
+                nombre_empresa
+            },
+        });
+
+        res.status(200).json({
+            ok: true,
+            message: 'Empresa actualizado con éxito!',
+            data: user,
+        });
     } catch (error) {
-      next(error);
+        next(error);
     }
-  };
+};
