@@ -3,6 +3,7 @@ import { Router } from 'express';
 import {
   createPet,
   deletePet,
+  getAllPets,
   getMyPets,
   getPet,
   getPets,
@@ -23,11 +24,13 @@ router
   .get([protectWithJwt, isAdminOrVeterinarian], getPets);
 
 router.route('/my-pets').get(protectWithJwt, getMyPets);
+router.route('/get/all-pets').get([protectWithJwt, verifyAdmin], getAllPets);
 
 router
   .route('/:id')
   .get([protectWithJwt, isAdminOrVeterinarian], getPet)
   .put([protectWithJwt, isAdminOrVeterinarian], updatePet)
   .delete([protectWithJwt, verifyAdmin], deletePet);
+
 
 export default router;

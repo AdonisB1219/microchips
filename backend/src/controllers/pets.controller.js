@@ -119,6 +119,64 @@ export const getPets = async (req, res, next) => {
   }
 };
 
+export const getAllPets = async(req, res, next) => {
+  try {
+    let filterOptions = {
+          empresaId: req.authenticatedUser.Empresa.id
+    }
+
+    if (req.authenticatedUser.rolId === 4) {
+      filterOptions = {
+
+      }
+    }
+
+  const pets = await prisma.mascota.findMany({
+    where: filterOptions,
+    include: {
+      Tutor: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              nombre: true,
+              identificacion: true,
+              telefono: true,
+              email: true,
+            },
+          },
+        },
+      },
+      Veterinario: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              nombre: true,
+              identificacion: true,
+              telefono: true,
+              email: true,
+            },
+          },
+        },
+      },
+      Empresa: {
+        select: {
+          nombre_empresa: true
+        }
+      }
+    },
+  });
+
+  res.status(200).json({
+    ok: true,
+    data: pets,
+  });
+} catch (error) {
+  next(error);
+}
+}
+
 export const getMyPets = async (req, res, next) => {
   try {
     const page = +req.query.page || 1;

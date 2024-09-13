@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { signUpVeterinarian } from '../controllers/users.controller.js';
 import {
   deleteVeterinarian,
+  getAllVeterinarians,
   getVeterinarian,
   getVeterinarians,
   updateVeterinarian,
@@ -28,5 +29,8 @@ router
   .get([protectWithJwt, verifyAdmin], getVeterinarian)
   .put([protectWithJwt, verifyAdmin], updateVeterinarian)
   .delete([protectWithJwt, verifyAdmin], deleteVeterinarian);
+
+router.route('/get/all-veterinarians').get([protectWithJwt, verifyAdmin], getAllVeterinarians);
+
 
 export default router;

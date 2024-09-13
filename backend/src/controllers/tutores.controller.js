@@ -67,6 +67,43 @@ export const getTutores = async (req, res, next) => {
   }
 };
 
+export const getAllTutores = async (req, res, next) => {
+  try{
+
+    let filterOptions = {
+      empresaId: req.authenticatedUser.Empresa.id
+}
+
+if (req.authenticatedUser.rolId === 4) {
+  filterOptions = {
+
+  }
+}
+  const tutores = await prisma.tutor.findMany({
+    where: filterOptions,
+    include: {
+      user: {
+        select: {
+          id: true,
+          nombre: true,
+          identificacion: true,
+          telefono: true,
+          email: true,
+          Empresa: true
+        },
+      },
+    },
+  });
+
+  res.status(200).json({
+    ok: true,
+    data: tutores,
+  });
+} catch (error) {
+  next(error);
+}
+}
+
 export const getTutor = async (req, res, next) => {
   const { id } = req.params;
   try {

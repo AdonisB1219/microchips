@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
   deleteTutor,
+  getAllTutores,
   getTutor,
   getTutores,
   updateTutor,
@@ -25,6 +26,8 @@ router
   .get([protectWithJwt, verifyAdmin], getTutor)
   .put([protectWithJwt, verifyAdmin], updateTutor)
   .delete([protectWithJwt, verifyAdmin], deleteTutor);
+
+router.route('/get/all-tutores').get([protectWithJwt, verifyAdmin], getAllTutores);
 
 
 export default router;

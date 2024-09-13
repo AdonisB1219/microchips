@@ -63,6 +63,43 @@ export const getVeterinarians = async (req, res, next) => {
   }
 };
 
+export const getAllVeterinarians = async (req, res, next) => {
+  try {
+
+    let filterOptions = {
+      empresaId: req.authenticatedUser.Empresa.id
+}
+
+if (req.authenticatedUser.rolId === 4) {
+  filterOptions = {
+
+  }
+}
+    const veterinarians = await prisma.veterinario.findMany({
+      where: filterOptions,
+      include: {
+        user: {
+          select: {
+            id: true,
+            nombre: true,
+            identificacion: true,
+            telefono: true,
+            email: true,
+            Empresa: true
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      ok: true,
+      data: veterinarians,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export const getVeterinarian = async (req, res, next) => {
 
   const { id } = req.params;
