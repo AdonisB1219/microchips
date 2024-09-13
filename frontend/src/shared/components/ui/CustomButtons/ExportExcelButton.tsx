@@ -10,7 +10,7 @@ export type ExportExcelButtonProps = {
 const ExportExcelButton: React.FC<ExportExcelButtonProps> = ({
   handleExportData,
 }) => {
-  const isAdmin = useAuthStore(s => s.user?.es_admin);
+  const isAdmin = useAuthStore(s => s.user?.rolId);
 
   return (
     <>
