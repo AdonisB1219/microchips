@@ -16,7 +16,7 @@ import { useTableFilter } from '@/shared/hooks/useTableFilter';
 import { Pet, PetPopulated } from '@/shared/interfaces';
 import { emptyCellOneLevel, getEnvs } from '@/shared/utils';
 import { formatDate } from '@/shared/utils/format-date';
-import { useDeletePet, useFetchMyPets, useFetchPets } from '@/store/app/pets';
+import { useDeletePet, useFetchAllPets, useFetchMyPets, useFetchPets } from '@/store/app/pets';
 import { useAuthStore } from '@/store/auth';
 import { useUiConfirmModalStore } from '@/store/ui';
 import { toast } from 'react-toastify';
@@ -80,6 +80,12 @@ const PestPage: React.FC<PestPageProps> = () => {
     nombre_mascota: searchTerm,
   });
 
+
+  const {
+    data: allPets,
+  } = useFetchAllPets(!!user?.rolId && user?.rolId > 1);
+
+
   ///* handlers
   const onEdit = (pet: Pet) => {
     setConfirmDialog({
@@ -119,12 +125,13 @@ const PestPage: React.FC<PestPageProps> = () => {
 
   const handleExportData = () => {
     // data based on user role
-    const data = user?.rolId === 1
-      ? myPets?.data || []
-      : PestPagingRes?.data || [];
+    const data = allPets?.data || [];
+    console.log(data);
     if (!data.length) {
       return toast.warning('No hay datos para exportar');
     }
+
+ 
 
     const flattenedData = data.map(item => {
       const { Tutor, Veterinario, ...rest } = item;

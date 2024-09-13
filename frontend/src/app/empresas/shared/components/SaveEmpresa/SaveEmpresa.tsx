@@ -24,7 +24,7 @@ export interface SaveEmpresaProps {
     empresa?: Empresa;
 }
 
-type SaveFormData = CreateEmpresaParams & {};
+type SaveFormData = CreateEmpresaParams;
 
 const SaveEmpresa: React.FC<SaveEmpresaProps> = ({ title, empresa }) => {
     const navigate = useNavigate();

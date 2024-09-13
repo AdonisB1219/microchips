@@ -22,6 +22,14 @@ export const useFetchPets = (dependent: boolean, params?: GetPetsParams) => {
   });
 };
 
+export const useFetchAllPets = (dependent: boolean) => {
+  return useQuery({
+    queryKey: ['allPets'],
+    queryFn: () => getAllPets(),
+    enabled: dependent,
+  });
+};
+
 export const useFetchMyPets = (dependent: boolean, params?: GetPetsParams) => {
   return useQuery({
     queryKey: ['myPets', ...Object.values(params || {})],
@@ -126,6 +134,11 @@ export const getPets = (params?: GetPetsParams) => {
   const queryParams = getUrlParams(params || {});
   return get<PetsPaginatedRes>(`/pets/?${queryParams}`, true);
 };
+
+export const getAllPets = () => {
+  return get<PetsPaginatedRes>(`/pets/get/all-pets`, true);
+};
+
 export const getMyPets = (params?: GetPetsParams) => {
   const queryParams = getUrlParams(params || {});
   return get<PetsPaginatedRes>(`/pets/my-pets/?${queryParams}`, true);

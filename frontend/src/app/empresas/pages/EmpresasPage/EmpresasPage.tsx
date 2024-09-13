@@ -75,7 +75,7 @@ const EmpresasPage: React.FC<EmpresasPageProps> = () => {
       subtitle: '¿Está seguro que desea eliminar esta empresa?',
       onConfirm: () => {
         setConfirmDialogIsOpen(false);
-        deleteEmpresa.mutate(empresa.id!);
+        deleteEmpresa.mutate(empresa.id);
       },
     });
   };
